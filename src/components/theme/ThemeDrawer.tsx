@@ -202,7 +202,7 @@ export const ThemeDrawer: React.FC<ThemeDrawerProps> = ({ isOpen, onClose }) => 
                   type="text"
                   value={tempCompanyName}
                   onChange={(e) => setTempCompanyName(e.target.value)}
-                  placeholder="Ej. Filup, Mi Empresa"
+                  placeholder="Ej. Mi Empresa"
                   className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
@@ -215,7 +215,7 @@ export const ThemeDrawer: React.FC<ThemeDrawerProps> = ({ isOpen, onClose }) => 
                   type="text"
                   value={tempAppTitle}
                   onChange={(e) => setTempAppTitle(e.target.value)}
-                  placeholder="Ej. Filup Planning"
+                  placeholder="Ej. Planning"
                   className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
@@ -239,7 +239,7 @@ export const ThemeDrawer: React.FC<ThemeDrawerProps> = ({ isOpen, onClose }) => 
                   )}
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  Deja vacío para usar el isotipo predeterminado de Filup.
+                  Deja vacío para usar el isotipo predeterminado.
                 </p>
               </div>
 

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { applyBrandTheme } from '../utils/colors';
+import { getEnv } from '../utils/env';
 
 export interface ColorPreset {
   id: string;
@@ -9,7 +10,7 @@ export interface ColorPreset {
 }
 
 export const PRESET_PALETTES: ColorPreset[] = [
-  { id: 'filup-violet', name: 'Filup Violet', primary: '#7c3aed' },
+  { id: 'alternative-violet', name: 'Alternative Violet', primary: '#7c3aed' },
   { id: 'taiga-teal', name: 'Taiga Teal', primary: '#008a90' },
   { id: 'emerald', name: 'Emerald Peak', primary: '#059669' },
   { id: 'ocean-blue', name: 'Oceanic Blue', primary: '#2563eb' },
@@ -37,9 +38,9 @@ export const useThemeStore = create<ThemeState>()(
       mode: 'light',
       primaryColor: '#059669',
       activePreset: 'emerald',
-      companyName: import.meta.env.VITE_DEFAULT_COMPANY_NAME ?? '',
+      companyName: getEnv('VITE_DEFAULT_COMPANY_NAME', ''),
       companyLogo: null,
-      appTitle: import.meta.env.VITE_DEFAULT_APP_TITLE || 'planning',
+      appTitle: getEnv('VITE_DEFAULT_APP_TITLE', 'planning'),
 
       setMode: (mode) => {
         set({ mode });

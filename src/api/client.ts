@@ -1,6 +1,6 @@
-// API Client with automatic token attachment and error handling
+import { getEnv } from '../utils/env';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const API_BASE = getEnv('VITE_API_BASE_URL', '/api/v1');
 
 export class ApiError extends Error {
   constructor(public status: number, message: string, public data?: any) {

@@ -1,10 +1,11 @@
-// Real-time WebSockets client for Taiga Events
 import { useEffect, useState } from 'react';
 import { getSessionId } from './client';
+import { getEnv } from '../utils/env';
 
 const defaultWsProtocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const defaultWsHost = typeof window !== 'undefined' ? window.location.host : 'localhost:8000';
-const EVENTS_URL = import.meta.env.VITE_EVENTS_URL || `${defaultWsProtocol}//${defaultWsHost}/events`;
+const EVENTS_URL = getEnv('VITE_EVENTS_URL', `${defaultWsProtocol}//${defaultWsHost}/events`);
+
 
 type EventCallback = (data: any) => void;
 

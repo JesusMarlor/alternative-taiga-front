@@ -10,7 +10,7 @@ Designed to replace the legacy AngularJS frontend with a fluid, modern user expe
 
 - **⚡ Lightning-Fast Performance**: Powered by Vite and React 19 with instant Hot Module Replacement (HMR) and optimized production bundles.
 - **🎨 Dynamic Theming & White-Labeling**:
-  - Live color palette switcher (Filup Violet, Taiga Teal, Emerald Peak, Oceanic Blue, Cyber Rose, Amber Sunset, Slate Executive).
+  - Live color palette switcher (Alternative Violet, Taiga Teal, Emerald Peak, Oceanic Blue, Cyber Rose, Amber Sunset, Slate Executive).
   - Custom HEX color picker that dynamically generates CSS variables for all Tailwind color shades (`50` to `900`).
   - Dark, Light, and System display modes.
   - Fully customizable brand identity: change company logo (URL/image) and application title directly in the UI with local persistence.
@@ -42,7 +42,7 @@ Designed to replace the legacy AngularJS frontend with a fluid, modern user expe
 ### 1. Clone the repository
 ```bash
 git clone <your-repository-url>
-cd filup-taiga-front
+cd alternative-taiga-front
 ```
 
 ### 2. Use Node.js 22 & Enable pnpm
@@ -118,10 +118,42 @@ pnpm preview
 
 ---
 
+## 🐳 Docker Deployment
+
+A production-ready multi-stage [Dockerfile](Dockerfile), [nginx.conf](nginx.conf), and [docker-compose.yml](docker-compose.yml) are included.
+
+### Option 1: Run with Docker Compose (Recommended)
+```bash
+# 1. Create your environment file from template
+cp .env.example .env
+
+# 2. Build and start container in detached mode
+docker compose up -d --build
+
+# 3. Check logs
+docker compose logs -f
+```
+The app will be running on port `8080` (e.g. `http://your-vps-ip:8080`).
+
+### Option 2: Build & Run with plain Docker
+```bash
+# Build image
+docker build -t taiga-modern-frontend:latest .
+
+# Run container
+docker run -d \
+  --name taiga-modern-frontend \
+  --restart unless-stopped \
+  -p 8080:80 \
+  taiga-modern-frontend:latest
+```
+
+---
+
 ## 📁 Project Structure
 
 ```
-filup-taiga-front/
+alternative-taiga-front/
 ├── .env.example            # Environment variables template
 ├── .gitignore              # Git ignore rules (protects credentials & .env)
 ├── .nvmrc                  # Node version specification (v22)
