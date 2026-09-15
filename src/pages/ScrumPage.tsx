@@ -1,0 +1,271 @@
+import React, { useEffect, useState } from 'react';
+import { useProjectStore } from '../stores/projectStore';
+import { getMilestones } from '../api/milestones';
+import { getUserStories } from '../api/userstories';
+import { Milestone, UserStory } from '../types/taiga';
+import { UserAvatar } from '../components/shared/UserAvatar';
+import { StatusBadge } from '../components/shared/Badges';
+import { 
+  Calendar, 
+  Flame, 
+  CheckCircle2, 
+  Clock, 
+  ChevronRight, 
+  Layers, 
+  Plus, 
+  CheckCheck,
+  TrendingDown,
+  Loader2,
+  FolderOpen
+} from 'lucide-react';
+
+export const ScrumPage: React.FC = () => {
+  const { currentProject } = useProjectStore();
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
+  const [stories, setStories] = useState<UserStory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!currentProject) return;
+    setIsLoading(true);
+
+    Promise.all([
+      getMilestones(currentProject.id),
+      getUserStories(currentProject.id),
+    ])
+      .then(([msData, storiesData]) => {
+        setMilestones(msData);
+        if (msData.length > 0) {
+          setSelectedMilestone(msData[0]);
+        }
+        setStories(storiesData);
+      })
+      .catch((err) => console.error('Error loading scrum data:', err))
+      .finally(() => setIsLoading(false));
+  }, [currentProject]);
+
+  if (!currentProject) return null;
+
+  // Stories in selected sprint vs backlog
+  const sprintStories = selectedMilestone
+    ? stories.filter((s) => s.milestone === selectedMilestone.id)
+    : [];
+
+  const backlogStories = stories.filter((s) => !s.milestone);
+
+  // Compute sprint totals
+  const totalSprintPoints = sprintStories.reduce(
+    (acc, s) => acc + (s.total_points || 0),
+    0
+  );
+  const closedSprintPoints = sprintStories
+    .filter((s) => s.is_closed)
+    .reduce((acc, s) => acc + (s.total_points || 0), 0);
+
+  const completionPercentage =
+    totalSprintPoints > 0
+      ? Math.round((closedSprintPoints / totalSprintPoints) * 100)
+      : 0;
+
+  return (
+    <div className="p-4 sm:p-6 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+              Scrum & Sprints
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-500/10 text-brand-600 dark:text-brand-400">
+              {milestones.length} Sprints
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Gestión de iteraciones, backlog y estimaciones de puntos
+          </p>
+        </div>
+
+        {/* Milestone selector */}
+        {milestones.length > 0 && (
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-semibold text-slate-500">Sprint:</label>
+            <select
+              value={selectedMilestone?.id || ''}
+              onChange={(e) => {
+                const found = milestones.find((m) => m.id === Number(e.target.value));
+                if (found) setSelectedMilestone(found);
+              }}
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            >
+              {milestones.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name} ({m.closed ? 'Cerrado' : 'Activo'})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
+      {isLoading ? (
+        <div className="py-24 flex flex-col items-center justify-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
+          <p className="text-xs text-slate-500 font-medium">Cargando Sprints y Backlog...</p>
+        </div>
+      ) : (
+        <>
+          {/* Sprint Overview Card */}
+          {selectedMilestone ? (
+            <div className="bg-white dark:bg-slate-900/90 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-5">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                      {selectedMilestone.name}
+                    </h2>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                      {selectedMilestone.closed ? 'Cerrado' : 'En Progreso'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                    <span>
+                      {selectedMilestone.estimated_start} al {selectedMilestone.estimated_finish}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Points Progress */}
+                <div className="flex items-center gap-6">
+                  <div className="text-right">
+                    <div className="text-lg font-black text-slate-900 dark:text-white">
+                      {closedSprintPoints} / {totalSprintPoints} <span className="text-xs font-normal text-slate-400">pts</span>
+                    </div>
+                    <div className="text-[11px] text-slate-500 font-medium">
+                      {completionPercentage}% completado
+                    </div>
+                  </div>
+
+                  <div className="w-24 h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-brand-600 to-emerald-500 rounded-full transition-all duration-500"
+                      style={{ width: `${completionPercentage}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Sprint Stories List */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Historias en este Sprint ({sprintStories.length})
+                </h3>
+
+                {sprintStories.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+                    No hay historias asignadas a este sprint aún.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800/80 border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900/60">
+                    {sprintStories.map((story) => (
+                      <div
+                        key={story.id}
+                        className="p-3.5 sm:px-5 flex items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="text-xs font-mono font-bold text-slate-400">
+                            #{story.ref}
+                          </span>
+                          <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
+                            {story.subject}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          {story.total_points && (
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-brand-500/10 text-brand-600 dark:text-brand-400">
+                              {story.total_points} pts
+                            </span>
+                          )}
+
+                          <StatusBadge
+                            name={story.status_extra_info?.name || 'Nuevo'}
+                            color={story.status_extra_info?.color}
+                            isClosed={story.is_closed}
+                          />
+
+                          {story.assigned_to_extra_info && (
+                            <UserAvatar
+                              name={story.assigned_to_extra_info.full_name_display}
+                              photo={story.assigned_to_extra_info.photo}
+                              size="xs"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
+              <Calendar className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+              <p className="text-sm font-semibold">No hay sprints creados en este proyecto</p>
+            </div>
+          )}
+
+          {/* Backlog Section */}
+          <div className="bg-white dark:bg-slate-900/90 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FolderOpen className="w-4 h-4 text-brand-500" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Product Backlog ({backlogStories.length} pendientes)
+                </h3>
+              </div>
+            </div>
+
+            {backlogStories.length === 0 ? (
+              <div className="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+                ¡Excelente! Todas las historias han sido planificadas en un Sprint.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900/60">
+                {backlogStories.map((story) => (
+                  <div
+                    key={story.id}
+                    className="p-3.5 sm:px-5 flex items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-xs font-mono font-bold text-slate-400">
+                        #{story.ref}
+                      </span>
+                      <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
+                        {story.subject}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      {story.total_points && (
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                          {story.total_points} pts
+                        </span>
+                      )}
+                      <StatusBadge
+                        name={story.status_extra_info?.name || 'Nuevo'}
+                        color={story.status_extra_info?.color}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
