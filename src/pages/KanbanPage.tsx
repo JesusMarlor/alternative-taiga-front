@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProjectStore } from '../stores/projectStore';
-import { getUserStories, updateUserStory } from '../api/userstories';
+import { getUserStories, updateUserStory, getUserStoryByRef, getUserStoryAttachments } from '../api/userstories';
+import { getTasksByStory } from '../api/tasks';
 import { useTaigaLiveEvents } from '../api/events';
-import { UserStory, StatusItem } from '../types/taiga';
+import { UserStory, StatusItem, Task, Attachment } from '../types/taiga';
 import { UserAvatar } from '../components/shared/UserAvatar';
 import { StatusBadge } from '../components/shared/Badges';
 import { CreateUserStoryModal } from '../components/modals/CreateUserStoryModal';
@@ -22,7 +23,9 @@ import {
   X,
   Loader2,
   Calendar,
-  Pencil
+  Pencil,
+  ExternalLink,
+  Paperclip
 } from 'lucide-react';
 
 export const KanbanPage: React.FC = () => {
@@ -34,9 +37,40 @@ export const KanbanPage: React.FC = () => {
   const [selectedAssignee, setSelectedAssignee] = useState<number | 'all'>('all');
   const [selectedMilestone, setSelectedMilestone] = useState<number | 'all'>('all');
   const [selectedStory, setSelectedStory] = useState<UserStory | null>(null);
+  const [storyDetail, setStoryDetail] = useState<UserStory | null>(null);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+  const [storyTasks, setStoryTasks] = useState<Task[]>([]);
+  const [storyAttachments, setStoryAttachments] = useState<Attachment[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createStatusId, setCreateStatusId] = useState<number | undefined>(undefined);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Fetch full details when a story is clicked on the board
+  useEffect(() => {
+    if (selectedStory && currentProject) {
+      setIsLoadingDetail(true);
+      Promise.all([
+        getUserStoryByRef(currentProject.id, selectedStory.ref, { order_by: 'backlog_order' }),
+        getUserStoryAttachments(currentProject.id, selectedStory.id).catch(() => [] as Attachment[]),
+        getTasksByStory(currentProject.id, selectedStory.id).catch(() => [] as Task[]),
+      ])
+        .then(([detail, atts, tsks]) => {
+          setStoryDetail(detail);
+          setStoryAttachments(atts);
+          setStoryTasks(tsks);
+        })
+        .catch((err) => {
+          console.error('Error loading story detail in modal:', err);
+        })
+        .finally(() => {
+          setIsLoadingDetail(false);
+        });
+    } else {
+      setStoryDetail(null);
+      setStoryAttachments([]);
+      setStoryTasks([]);
+    }
+  }, [selectedStory, currentProject]);
 
   const loadStories = useCallback(async (showLoading = true) => {
     if (!currentProject) return;
@@ -325,24 +359,46 @@ export const KanbanPage: React.FC = () => {
       )}
 
       {/* Story Detail Modal */}
-      {selectedStory && (
+      {selectedStory && !isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-xl w-full p-6 space-y-5 relative">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-xl w-full p-6 space-y-5 relative max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between">
               <div>
-                <span className="text-xs font-mono font-bold text-brand-500">
-                  HISTORIA #{selectedStory.ref}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-black text-[#008db8]">
+                    HISTORIA #{(storyDetail || selectedStory).ref}
+                  </span>
+                  {isLoadingDetail && (
+                    <span className="flex items-center gap-1 text-[11px] text-brand-600 font-medium">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Cargando detalles...
+                    </span>
+                  )}
+                </div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
-                  {selectedStory.subject}
+                  {(storyDetail || selectedStory).subject}
                 </h3>
               </div>
-              <button
-                onClick={() => setSelectedStory(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ref = (storyDetail || selectedStory).ref;
+                    setSelectedStory(null);
+                    navigate(`/project/${currentProject.slug}/us/${ref}`);
+                  }}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  title="Abrir página completa"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setSelectedStory(null)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs">
@@ -351,7 +407,7 @@ export const KanbanPage: React.FC = () => {
                   Estado
                 </span>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">
-                  {selectedStory.status_extra_info?.name || 'Nuevo'}
+                  {(storyDetail || selectedStory).status_extra_info?.name || 'Nuevo'}
                 </span>
               </div>
               <div>
@@ -359,7 +415,7 @@ export const KanbanPage: React.FC = () => {
                   Puntos
                 </span>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">
-                  {selectedStory.total_points ? `${selectedStory.total_points} pts` : 'Sin estimar'}
+                  {(storyDetail || selectedStory).total_points ? `${(storyDetail || selectedStory).total_points} pts` : 'Sin estimar'}
                 </span>
               </div>
               <div>
@@ -367,7 +423,7 @@ export const KanbanPage: React.FC = () => {
                   Sprint / Milestone
                 </span>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">
-                  {selectedStory.milestone_name || 'En Backlog'}
+                  {(storyDetail || selectedStory).milestone_name || 'En Backlog'}
                 </span>
               </div>
             </div>
@@ -377,24 +433,58 @@ export const KanbanPage: React.FC = () => {
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
                 Descripción
               </span>
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 text-xs text-slate-700 dark:text-slate-300 min-h-[80px]">
-                {selectedStory.description || 'Sin descripción detallada disponible.'}
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 text-xs text-slate-700 dark:text-slate-300 min-h-[80px] max-h-[260px] overflow-y-auto">
+                {isLoadingDetail ? (
+                  <div className="flex items-center gap-2 text-slate-400 py-3">
+                    <Loader2 className="w-4 h-4 animate-spin text-brand-600" />
+                    <span>Cargando descripción completa...</span>
+                  </div>
+                ) : (storyDetail?.description_html || storyDetail?.description) ? (
+                  <div
+                    className="taiga-wysiwyg-content select-text"
+                    dangerouslySetInnerHTML={{
+                      __html: storyDetail.description_html || storyDetail.description || '',
+                    }}
+                  />
+                ) : (
+                  <span className="text-slate-400 italic">
+                    Sin descripción detallada disponible.
+                  </span>
+                )}
               </div>
             </div>
+
+            {/* Extra summary if tasks or attachments exist */}
+            {((storyTasks && storyTasks.length > 0) || (storyAttachments && storyAttachments.length > 0)) && (
+              <div className="flex items-center gap-4 text-xs text-slate-500 pt-1">
+                {storyTasks.length > 0 && (
+                  <span className="flex items-center gap-1 font-medium">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-brand-600" />
+                    {storyTasks.filter(t => t.is_closed).length}/{storyTasks.length} tareas
+                  </span>
+                )}
+                {storyAttachments.length > 0 && (
+                  <span className="flex items-center gap-1 font-medium">
+                    <Paperclip className="w-3.5 h-3.5 text-slate-400" />
+                    {storyAttachments.length} adjuntos
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* Assignee */}
             <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                {selectedStory.assigned_to_extra_info ? (
+                {(storyDetail || selectedStory).assigned_to_extra_info ? (
                   <>
                     <UserAvatar
-                      name={selectedStory.assigned_to_extra_info.full_name_display}
-                      photo={selectedStory.assigned_to_extra_info.photo}
+                      name={(storyDetail || selectedStory).assigned_to_extra_info?.full_name_display}
+                      photo={(storyDetail || selectedStory).assigned_to_extra_info?.photo}
                       size="sm"
                     />
                     <div>
                       <p className="text-xs font-bold text-slate-900 dark:text-white">
-                        {selectedStory.assigned_to_extra_info.full_name_display}
+                        {(storyDetail || selectedStory).assigned_to_extra_info?.full_name_display}
                       </p>
                       <p className="text-[10px] text-slate-400">Responsable</p>
                     </div>
@@ -439,19 +529,26 @@ export const KanbanPage: React.FC = () => {
       />
 
       {/* Edit Story Modal */}
-      <EditUserStoryModal
-        isOpen={isEditModalOpen}
-        story={selectedStory}
-        onClose={() => setIsEditModalOpen(false)}
-        onUpdated={(updated) => {
-          setStories((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
-          setSelectedStory(updated);
-        }}
-        onDeleted={(deletedId) => {
-          setStories((prev) => prev.filter((s) => s.id !== deletedId));
-          setSelectedStory(null);
-        }}
-      />
+      {selectedStory && (
+        <EditUserStoryModal
+          isOpen={isEditModalOpen}
+          story={storyDetail || selectedStory}
+          onClose={() => {
+            setIsEditModalOpen(false);
+          }}
+          onUpdated={(updated) => {
+            setStories((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+            setStoryDetail(updated);
+            setSelectedStory(updated);
+            loadStories(false);
+          }}
+          onDeleted={(deletedId) => {
+            setStories((prev) => prev.filter((s) => s.id !== deletedId));
+            setSelectedStory(null);
+            setIsEditModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 };
