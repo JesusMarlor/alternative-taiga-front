@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import { useThemeStore } from './stores/themeStore';
 import { LoginPage } from './pages/LoginPage';
+import { InvitationPage } from './pages/InvitationPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { ProjectLayout } from './components/layout/ProjectLayout';
 import { KanbanPage } from './pages/KanbanPage';
@@ -35,6 +36,8 @@ export function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/invitation/:token" element={<InvitationPage />} />
+        <Route path="/invitations/:token" element={<InvitationPage />} />
 
         <Route
           path="/"

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { User, AuthResponse } from '../types/taiga';
-import { loginApi, getMeApi } from '../api/auth';
+import { loginApi, getMeApi, loginWithInvitationApi, registerWithInvitationApi } from '../api/auth';
 
 interface AuthState {
   user: User | null;
@@ -10,6 +10,15 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   login: (username: string, password: string) => Promise<AuthResponse>;
+  loginWithInvitation: (username: string, password: string, invitationToken: string) => Promise<AuthResponse>;
+  registerWithInvitation: (data: {
+    token: string;
+    fullName: string;
+    username: string;
+    email: string;
+    password: string;
+  }) => Promise<AuthResponse>;
+  setAuthSession: (res: AuthResponse) => void;
   logout: () => void;
   checkAuth: () => Promise<void>;
   clearError: () => void;
@@ -30,27 +39,56 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: false,
   error: null,
 
+  setAuthSession: (res: AuthResponse) => {
+    localStorage.setItem('taiga_token', res.auth_token);
+    if (res.refresh) localStorage.setItem('taiga_refresh', res.refresh);
+    localStorage.setItem('taiga_user', JSON.stringify(res));
+
+    set({
+      user: res,
+      token: res.auth_token,
+      refreshToken: res.refresh || null,
+      isAuthenticated: true,
+      isLoading: false,
+      error: null,
+    });
+  },
+
   login: async (username, password) => {
     set({ isLoading: true, error: null });
     try {
       const res = await loginApi(username, password);
-      localStorage.setItem('taiga_token', res.auth_token);
-      localStorage.setItem('taiga_refresh', res.refresh);
-      localStorage.setItem('taiga_user', JSON.stringify(res));
-
-      set({
-        user: res,
-        token: res.auth_token,
-        refreshToken: res.refresh,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
-
+      get().setAuthSession(res);
       return res;
     } catch (err: any) {
       const msg = err?.message || 'Error al iniciar sesión. Verifica tus credenciales.';
       set({ error: msg, isLoading: false, isAuthenticated: false });
+      throw err;
+    }
+  },
+
+  loginWithInvitation: async (username, password, invitationToken) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await loginWithInvitationApi(username, password, invitationToken);
+      get().setAuthSession(res);
+      return res;
+    } catch (err: any) {
+      const msg = err?.message || 'Error al aceptar invitación con usuario existente.';
+      set({ error: msg, isLoading: false });
+      throw err;
+    }
+  },
+
+  registerWithInvitation: async (data) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await registerWithInvitationApi(data);
+      get().setAuthSession(res);
+      return res;
+    } catch (err: any) {
+      const msg = err?.message || 'Error al registrar nuevo usuario con la invitación.';
+      set({ error: msg, isLoading: false });
       throw err;
     }
   },
