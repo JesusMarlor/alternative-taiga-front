@@ -15,7 +15,8 @@ import {
   BookOpen, 
   Sliders,
   Trash2,
-  X
+  X,
+  Calendar
 } from 'lucide-react';
 
 interface PermissionDefinition {
@@ -47,10 +48,10 @@ const PERMISSION_CATEGORIES: PermissionCategory[] = [
     icon: CheckSquare,
     permissions: [
       { key: 'view_tasks', name: 'Ver tareas' },
-      { key: 'add_tasks', name: 'Crear tareas' },
-      { key: 'modify_tasks', name: 'Modificar tareas' },
-      { key: 'delete_tasks', name: 'Eliminar tareas' },
-      { key: 'comment_tasks', name: 'Comentar en tareas' },
+      { key: 'add_task', name: 'Crear tareas' },
+      { key: 'modify_task', name: 'Modificar tareas' },
+      { key: 'delete_task', name: 'Eliminar tareas' },
+      { key: 'comment_task', name: 'Comentar en tareas' },
     ],
   },
   {
@@ -58,10 +59,10 @@ const PERMISSION_CATEGORIES: PermissionCategory[] = [
     icon: Target,
     permissions: [
       { key: 'view_epics', name: 'Ver épicas' },
-      { key: 'add_epics', name: 'Crear épicas' },
-      { key: 'modify_epics', name: 'Modificar épicas' },
-      { key: 'delete_epics', name: 'Eliminar épicas' },
-      { key: 'comment_epics', name: 'Comentar en épicas' },
+      { key: 'add_epic', name: 'Crear épicas' },
+      { key: 'modify_epic', name: 'Modificar épicas' },
+      { key: 'delete_epic', name: 'Eliminar épicas' },
+      { key: 'comment_epic', name: 'Comentar en épicas' },
     ],
   },
   {
@@ -69,10 +70,20 @@ const PERMISSION_CATEGORIES: PermissionCategory[] = [
     icon: Bug,
     permissions: [
       { key: 'view_issues', name: 'Ver incidencias' },
-      { key: 'add_issues', name: 'Crear incidencias' },
-      { key: 'modify_issues', name: 'Modificar incidencias' },
-      { key: 'delete_issues', name: 'Eliminar incidencias' },
-      { key: 'comment_issues', name: 'Comentar en incidencias' },
+      { key: 'add_issue', name: 'Crear incidencias' },
+      { key: 'modify_issue', name: 'Modificar incidencias' },
+      { key: 'delete_issue', name: 'Eliminar incidencias' },
+      { key: 'comment_issue', name: 'Comentar en incidencias' },
+    ],
+  },
+  {
+    title: 'Sprints (Milestones)',
+    icon: Calendar,
+    permissions: [
+      { key: 'view_milestones', name: 'Ver sprints' },
+      { key: 'add_milestone', name: 'Crear sprints' },
+      { key: 'modify_milestone', name: 'Modificar sprints' },
+      { key: 'delete_milestone', name: 'Eliminar sprints' },
     ],
   },
   {
@@ -80,15 +91,20 @@ const PERMISSION_CATEGORIES: PermissionCategory[] = [
     icon: BookOpen,
     permissions: [
       { key: 'view_wiki_pages', name: 'Ver páginas wiki' },
-      { key: 'add_wiki_pages', name: 'Crear páginas wiki' },
-      { key: 'modify_wiki_pages', name: 'Modificar páginas wiki' },
-      { key: 'delete_wiki_pages', name: 'Eliminar páginas wiki' },
+      { key: 'add_wiki_page', name: 'Crear páginas wiki' },
+      { key: 'modify_wiki_page', name: 'Modificar páginas wiki' },
+      { key: 'comment_wiki_page', name: 'Comentar en páginas wiki' },
+      { key: 'delete_wiki_page', name: 'Eliminar páginas wiki' },
     ],
   },
   {
     title: 'Administración del Proyecto',
     icon: Sliders,
     permissions: [
+      { key: 'modify_project', name: 'Modificar proyecto' },
+      { key: 'delete_project', name: 'Eliminar proyecto' },
+      { key: 'add_member', name: 'Añadir miembros' },
+      { key: 'remove_member', name: 'Eliminar miembros' },
       { key: 'admin_project_values', name: 'Administrar valores (estados, tipos, etc.)' },
       { key: 'admin_roles', name: 'Administrar roles y permisos' },
     ],
@@ -171,8 +187,8 @@ export const PermissionsSettingsSection: React.FC = () => {
           'view_issues',
           'view_wiki_pages',
           'add_us',
-          'add_tasks',
-          'add_issues',
+          'add_task',
+          'add_issue',
         ],
       });
 
