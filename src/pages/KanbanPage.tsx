@@ -233,12 +233,19 @@ export const KanbanPage: React.FC = () => {
                     columnStories.map((story) => (
                       <div
                         key={story.id}
-                        onClick={() => navigate(`/project/${currentProject.slug}/us/${story.ref}`)}
+                        onClick={() => setSelectedStory(story)}
                         className="group bg-white dark:bg-slate-800/90 rounded-xl p-3.5 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500/60 shadow-xs hover:shadow-md transition-all cursor-pointer space-y-2.5 relative"
                       >
                         {/* Top: Ref & Points */}
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-mono font-bold text-[#008db8]">
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/project/${currentProject.slug}/us/${story.ref}`);
+                            }}
+                            className="text-[11px] font-mono font-bold text-[#008db8] hover:underline cursor-pointer"
+                            title="Abrir página completa"
+                          >
                             #{story.ref}
                           </span>
 
@@ -260,7 +267,7 @@ export const KanbanPage: React.FC = () => {
                                 setSelectedStory(story);
                               }}
                               className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-brand-600 transition-all"
-                              title="Edición rápida"
+                              title="Editar historia"
                             >
                               <Pencil className="w-3 h-3" />
                             </button>

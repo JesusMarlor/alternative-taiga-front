@@ -88,7 +88,7 @@ export const UserStoryDetailPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const storyData = await getUserStoryByRef(currentProject.id, ref);
+      const storyData = await getUserStoryByRef(currentProject.id, ref, { order_by: 'backlog_order' });
       setStory(storyData);
       setSubjectDraft(storyData.subject);
       setDescriptionDraft(storyData.description || '');

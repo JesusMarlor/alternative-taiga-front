@@ -49,9 +49,8 @@ export const IssuesPage: React.FC = () => {
   );
 
   const handleIssueClick = (issue: Issue) => {
-    if (currentProject) {
-      navigate(`/project/${currentProject.slug}/issue/${issue.ref}`);
-    }
+    setSelectedIssue(issue);
+    setIsEditModalOpen(true);
   };
 
   const handleIssueUpdated = (updated: Issue) => {
@@ -143,8 +142,17 @@ export const IssuesPage: React.FC = () => {
                     onClick={() => handleIssueClick(issue)}
                     className="hover:bg-rose-50/40 dark:hover:bg-rose-950/20 transition-colors cursor-pointer group"
                   >
-                    <td className="py-3 px-4 font-mono font-bold text-slate-400 group-hover:text-rose-500 transition-colors">
-                      #{issue.ref}
+                    <td className="py-3 px-4">
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/project/${currentProject.slug}/issue/${issue.ref}`);
+                        }}
+                        className="font-mono font-bold text-rose-500 hover:underline cursor-pointer"
+                        title="Abrir página completa"
+                      >
+                        #{issue.ref}
+                      </span>
                     </td>
                     <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white max-w-xs truncate">
                       <div className="flex items-center gap-1.5">

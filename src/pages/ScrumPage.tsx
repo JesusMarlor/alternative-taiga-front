@@ -86,11 +86,10 @@ export const ScrumPage: React.FC = () => {
       ? Math.round((closedSprintPoints / totalSprintPoints) * 100)
       : 0;
 
-  // Story click handler
+  // Story click handler - opens modal form populated via by_ref
   const handleStoryClick = (story: UserStory) => {
-    if (currentProject) {
-      navigate(`/project/${currentProject.slug}/us/${story.ref}`);
-    }
+    setEditingStory(story);
+    setIsEditStoryModalOpen(true);
   };
 
   const handleStoryUpdated = (updated: UserStory) => {
@@ -269,7 +268,14 @@ export const ScrumPage: React.FC = () => {
                         className="p-3.5 sm:px-5 flex items-center justify-between gap-3 hover:bg-brand-50/40 dark:hover:bg-brand-950/20 cursor-pointer transition-colors group"
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <span className="text-xs font-mono font-bold text-slate-400 group-hover:text-brand-500 transition-colors">
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/project/${currentProject.slug}/us/${story.ref}`);
+                            }}
+                            className="text-xs font-mono font-bold text-[#008db8] hover:underline cursor-pointer"
+                            title="Abrir página completa"
+                          >
                             #{story.ref}
                           </span>
                           <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 truncate group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
@@ -378,7 +384,14 @@ export const ScrumPage: React.FC = () => {
                     className="p-3.5 sm:px-5 flex items-center justify-between gap-3 hover:bg-brand-50/40 dark:hover:bg-brand-950/20 cursor-pointer transition-colors group"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-xs font-mono font-bold text-slate-400 group-hover:text-brand-500 transition-colors">
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/project/${currentProject.slug}/us/${story.ref}`);
+                        }}
+                        className="text-xs font-mono font-bold text-[#008db8] hover:underline cursor-pointer"
+                        title="Abrir página completa"
+                      >
                         #{story.ref}
                       </span>
                       <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 truncate group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
