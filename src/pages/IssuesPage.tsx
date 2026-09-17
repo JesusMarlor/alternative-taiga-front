@@ -4,6 +4,7 @@ import { getIssues, createIssue, updateIssue } from '../api/issues';
 import { Issue } from '../types/taiga';
 import { UserAvatar } from '../components/shared/UserAvatar';
 import { StatusBadge, PriorityBadge, SeverityBadge } from '../components/shared/Badges';
+import { CreateIssueModal } from '../components/modals/CreateIssueModal';
 import { 
   AlertCircle, 
   Plus, 
@@ -20,8 +21,6 @@ export const IssuesPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [newSubject, setNewSubject] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!currentProject) return;
@@ -39,34 +38,6 @@ export const IssuesPage: React.FC = () => {
       issue.subject.toLowerCase().includes(search.toLowerCase()) ||
       issue.ref.toString().includes(search)
   );
-
-  const handleCreateIssue = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSubject.trim() || !currentProject) return;
-
-    setIsSubmitting(true);
-    try {
-      const priority = currentProject.default_priority || 2;
-      const severity = currentProject.default_severity || 3;
-      const type = currentProject.default_issue_type || 1;
-
-      const created = await createIssue({
-        project: currentProject.id,
-        subject: newSubject.trim(),
-        priority,
-        severity,
-        type,
-      });
-
-      setIssues((prev) => [created, ...prev]);
-      setNewSubject('');
-      setIsCreateModalOpen(false);
-    } catch (err) {
-      console.error('Error creating issue:', err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
@@ -192,58 +163,14 @@ export const IssuesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Create Issue Modal */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-md w-full p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                Nueva Incidencia
-              </h3>
-              <button
-                onClick={() => setIsCreateModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateIssue} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">
-                  Descripción o Título del Bug
-                </label>
-                <input
-                  type="text"
-                  required
-                  autoFocus
-                  value={newSubject}
-                  onChange={(e) => setNewSubject(e.target.value)}
-                  placeholder="Ej. Error 500 al exportar reporte de ventas"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateModalOpen(false)}
-                  className="px-3.5 py-2 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !newSubject.trim()}
-                  className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition-all"
-                >
-                  {isSubmitting ? 'Guardando...' : 'Crear Incidencia'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Create Issue Modal with full API fields */}
+      <CreateIssueModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreated={(created) => {
+          setIssues((prev) => [created, ...prev]);
+        }}
+      />
     </div>
   );
 };

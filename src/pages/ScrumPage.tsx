@@ -5,6 +5,7 @@ import { getUserStories } from '../api/userstories';
 import { Milestone, UserStory } from '../types/taiga';
 import { UserAvatar } from '../components/shared/UserAvatar';
 import { StatusBadge } from '../components/shared/Badges';
+import { CreateUserStoryModal } from '../components/modals/CreateUserStoryModal';
 import { 
   Calendar, 
   Flame, 
@@ -25,6 +26,8 @@ export const ScrumPage: React.FC = () => {
   const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
   const [stories, setStories] = useState<UserStory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [targetMilestoneId, setTargetMilestoneId] = useState<number | null | undefined>(undefined);
 
   useEffect(() => {
     if (!currentProject) return;
@@ -86,26 +89,40 @@ export const ScrumPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Milestone selector */}
-        {milestones.length > 0 && (
-          <div className="flex items-center gap-2">
-            <label className="text-xs font-semibold text-slate-500">Sprint:</label>
-            <select
-              value={selectedMilestone?.id || ''}
-              onChange={(e) => {
-                const found = milestones.find((m) => m.id === Number(e.target.value));
-                if (found) setSelectedMilestone(found);
-              }}
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
-            >
-              {milestones.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} ({m.closed ? 'Cerrado' : 'Activo'})
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        {/* Milestone selector and Action */}
+        <div className="flex flex-wrap items-center gap-3">
+          {milestones.length > 0 && (
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-slate-500">Sprint:</label>
+              <select
+                value={selectedMilestone?.id || ''}
+                onChange={(e) => {
+                  const found = milestones.find((m) => m.id === Number(e.target.value));
+                  if (found) setSelectedMilestone(found);
+                }}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              >
+                {milestones.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} ({m.closed ? 'Cerrado' : 'Activo'})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              setTargetMilestoneId(selectedMilestone ? selectedMilestone.id : null);
+              setIsCreateModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold shadow-sm transition-all active:scale-[0.98]"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nueva Historia</span>
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -219,14 +236,25 @@ export const ScrumPage: React.FC = () => {
 
           {/* Backlog Section */}
           <div className="bg-white dark:bg-slate-900/90 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FolderOpen className="w-4 h-4 text-brand-500" />
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Product Backlog ({backlogStories.length} pendientes)
-                </h3>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="w-4 h-4 text-brand-500" />
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Product Backlog ({backlogStories.length} pendientes)
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTargetMilestoneId(null);
+                    setIsCreateModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/40 hover:bg-brand-100 dark:hover:bg-brand-900/60 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Agregar al Backlog</span>
+                </button>
               </div>
-            </div>
 
             {backlogStories.length === 0 ? (
               <div className="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
@@ -266,6 +294,16 @@ export const ScrumPage: React.FC = () => {
           </div>
         </>
       )}
+
+      {/* Create User Story Modal */}
+      <CreateUserStoryModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        initialMilestoneId={targetMilestoneId}
+        onCreated={(created) => {
+          setStories((prev) => [created, ...prev]);
+        }}
+      />
     </div>
   );
 };

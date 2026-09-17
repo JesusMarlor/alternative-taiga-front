@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useProjectStore } from '../stores/projectStore';
-import { getUserStories, updateUserStory, createUserStory } from '../api/userstories';
+import { getUserStories, updateUserStory } from '../api/userstories';
 import { useTaigaLiveEvents } from '../api/events';
 import { UserStory, StatusItem } from '../types/taiga';
 import { UserAvatar } from '../components/shared/UserAvatar';
 import { StatusBadge } from '../components/shared/Badges';
+import { CreateUserStoryModal } from '../components/modals/CreateUserStoryModal';
 import confetti from 'canvas-confetti';
 import { 
   Search, 
@@ -30,8 +31,7 @@ export const KanbanPage: React.FC = () => {
   const [selectedMilestone, setSelectedMilestone] = useState<number | 'all'>('all');
   const [selectedStory, setSelectedStory] = useState<UserStory | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [newSubject, setNewSubject] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createStatusId, setCreateStatusId] = useState<number | undefined>(undefined);
 
   const loadStories = useCallback(async (showLoading = true) => {
     if (!currentProject) return;
@@ -111,29 +111,6 @@ export const KanbanPage: React.FC = () => {
         const refreshed = await getUserStories(currentProject.id);
         setStories(refreshed);
       }
-    }
-  };
-
-  const handleCreateStory = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSubject.trim() || !currentProject) return;
-
-    setIsSubmitting(true);
-    try {
-      const defaultStatus = currentProject.default_us_status || statuses[0]?.id || 1;
-      const created = await createUserStory({
-        project: currentProject.id,
-        subject: newSubject.trim(),
-        status: defaultStatus,
-      });
-
-      setStories((prev) => [created, ...prev]);
-      setNewSubject('');
-      setIsCreateModalOpen(false);
-    } catch (err) {
-      console.error('Error creating story:', err);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -223,9 +200,22 @@ export const KanbanPage: React.FC = () => {
                       {status.name}
                     </h3>
                   </div>
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 shadow-xs">
-                    {columnStories.length}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCreateStatusId(status.id);
+                        setIsCreateModalOpen(true);
+                      }}
+                      className="p-1 rounded-lg text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                      title={`Nueva historia en ${status.name}`}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 shadow-xs">
+                      {columnStories.length}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Cards List */}
@@ -402,58 +392,18 @@ export const KanbanPage: React.FC = () => {
         </div>
       )}
 
-      {/* New Story Modal */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-md w-full p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                Nueva Historia de Usuario
-              </h3>
-              <button
-                onClick={() => setIsCreateModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateStory} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-1">
-                  Título de la historia
-                </label>
-                <input
-                  type="text"
-                  required
-                  autoFocus
-                  value={newSubject}
-                  onChange={(e) => setNewSubject(e.target.value)}
-                  placeholder="Ej. Implementar autenticación OAuth"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateModalOpen(false)}
-                  className="px-3.5 py-2 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !newSubject.trim()}
-                  className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition-all"
-                >
-                  {isSubmitting ? 'Creando...' : 'Crear Historia'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* New Story Modal with full API fields */}
+      <CreateUserStoryModal
+        isOpen={isCreateModalOpen}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setCreateStatusId(undefined);
+        }}
+        initialStatusId={createStatusId}
+        onCreated={(created) => {
+          setStories((prev) => [created, ...prev]);
+        }}
+      />
     </div>
   );
 };
