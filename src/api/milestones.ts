@@ -17,3 +17,20 @@ export async function createMilestone(
     body: JSON.stringify(data),
   });
 }
+
+export async function updateMilestone(
+  id: number,
+  data: Partial<Milestone>
+): Promise<Milestone> {
+  return apiRequest<Milestone>(`/milestones/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteMilestone(id: number): Promise<void> {
+  return apiRequest<void>(`/milestones/${id}`, {
+    method: 'DELETE',
+  });
+}
+

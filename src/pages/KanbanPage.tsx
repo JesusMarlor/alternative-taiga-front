@@ -6,6 +6,7 @@ import { UserStory, StatusItem } from '../types/taiga';
 import { UserAvatar } from '../components/shared/UserAvatar';
 import { StatusBadge } from '../components/shared/Badges';
 import { CreateUserStoryModal } from '../components/modals/CreateUserStoryModal';
+import { EditUserStoryModal } from '../components/modals/EditUserStoryModal';
 import confetti from 'canvas-confetti';
 import { 
   Search, 
@@ -19,7 +20,8 @@ import {
   User as UserIcon,
   X,
   Loader2,
-  Calendar
+  Calendar,
+  Pencil
 } from 'lucide-react';
 
 export const KanbanPage: React.FC = () => {
@@ -32,6 +34,7 @@ export const KanbanPage: React.FC = () => {
   const [selectedStory, setSelectedStory] = useState<UserStory | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createStatusId, setCreateStatusId] = useState<number | undefined>(undefined);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const loadStories = useCallback(async (showLoading = true) => {
     if (!currentProject) return;
@@ -381,12 +384,22 @@ export const KanbanPage: React.FC = () => {
                 )}
               </div>
 
-              <button
-                onClick={() => setSelectedStory(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200"
-              >
-                Cerrar
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition-all active:scale-[0.98]"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  <span>Editar</span>
+                </button>
+                <button
+                  onClick={() => setSelectedStory(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -402,6 +415,21 @@ export const KanbanPage: React.FC = () => {
         initialStatusId={createStatusId}
         onCreated={(created) => {
           setStories((prev) => [created, ...prev]);
+        }}
+      />
+
+      {/* Edit Story Modal */}
+      <EditUserStoryModal
+        isOpen={isEditModalOpen}
+        story={selectedStory}
+        onClose={() => setIsEditModalOpen(false)}
+        onUpdated={(updated) => {
+          setStories((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+          setSelectedStory(updated);
+        }}
+        onDeleted={(deletedId) => {
+          setStories((prev) => prev.filter((s) => s.id !== deletedId));
+          setSelectedStory(null);
         }}
       />
     </div>

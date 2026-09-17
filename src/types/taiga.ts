@@ -200,6 +200,8 @@ export interface UserStory {
   is_closed: boolean;
   is_blocked?: boolean;
   blocked_note?: string;
+  client_requirement?: boolean;
+  team_requirement?: boolean;
   version: number;
   created_date: string;
   modified_date: string;
@@ -292,7 +294,12 @@ export interface Issue {
     photo?: string | null;
   } | null;
   project: number;
+  milestone?: number | null;
+  milestone_name?: string | null;
   is_closed: boolean;
+  is_blocked?: boolean;
+  blocked_note?: string;
+  version?: number;
   tags?: string[];
   created_date: string;
   modified_date: string;

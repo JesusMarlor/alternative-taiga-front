@@ -45,3 +45,10 @@ export async function createUserStory(
     body: JSON.stringify(data),
   });
 }
+
+export async function deleteUserStory(id: number): Promise<void> {
+  return apiRequest<void>(`/userstories/${id}`, {
+    method: 'DELETE',
+  });
+}
+

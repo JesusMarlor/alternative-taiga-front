@@ -20,3 +20,10 @@ export async function createIssue(
     body: JSON.stringify(data),
   });
 }
+
+export async function deleteIssue(id: number): Promise<void> {
+  return apiRequest<void>(`/issues/${id}`, {
+    method: 'DELETE',
+  });
+}
+
