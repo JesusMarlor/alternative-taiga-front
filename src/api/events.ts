@@ -13,6 +13,7 @@ class TaigaEventsClient {
   private isConnecting: boolean = false;
   private isConnected: boolean = false;
   private statusListeners: Set<(connected: boolean) => void> = new Set();
+  private reconnectAttempts: number = 0;
 
   public getConnected(): boolean {
     return this.isConnected;
@@ -20,11 +21,11 @@ class TaigaEventsClient {
 
   public onStatusChange(listener: (connected: boolean) => void) {
     this.statusListeners.add(listener);
-    listener(this.isConnected);
     return () => {
       this.statusListeners.delete(listener);
     };
   }
+
 
   private notifyStatus(connected: boolean) {
     this.isConnected = connected;
@@ -35,6 +36,9 @@ class TaigaEventsClient {
     const token = localStorage.getItem('taiga_token');
     if (!token) return;
 
+    const url = getEventsUrl();
+    if (!url) return;
+
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
       return;
     }
@@ -42,13 +46,14 @@ class TaigaEventsClient {
     this.isConnecting = true;
 
     try {
-      const url = getEventsUrl();
       this.ws = new WebSocket(url);
 
       this.ws.onopen = () => {
         this.isConnecting = false;
+        this.reconnectAttempts = 0;
         this.notifyStatus(true);
         console.log('[Taiga WSS] Conexión en tiempo real establecida');
+
 
         // Authenticate with sessionId & token
         const sessionId = getSessionId();
@@ -100,12 +105,14 @@ class TaigaEventsClient {
 
   private scheduleReconnect() {
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    const delay = Math.min(60000, 5000 * Math.pow(1.5, Math.min(this.reconnectAttempts++, 6)));
     this.reconnectTimer = setTimeout(() => {
       if (localStorage.getItem('taiga_token')) {
         this.connect();
       }
-    }, 5000);
+    }, delay);
   }
+
 
   private startHeartbeat() {
     this.stopHeartbeat();

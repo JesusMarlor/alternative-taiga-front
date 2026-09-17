@@ -47,11 +47,13 @@ export function getApiBaseUrl(): string {
 export function getEventsUrl(): string {
   const directEvents = getEnv('VITE_EVENTS_URL');
   if (directEvents) {
+    if (directEvents === 'none' || directEvents === 'false' || directEvents === 'disabled') return '';
     return directEvents.replace(/\/+$/, '');
   }
 
   const wsUrl = getEnv('TAIGA_WEBSOCKETS_URL');
   if (wsUrl) {
+    if (wsUrl === 'none' || wsUrl === 'false' || wsUrl === 'disabled') return '';
     const cleanWs = wsUrl.replace(/\/+$/, '');
     const rawSubpath = getEnv('TAIGA_SUBPATH', '');
     const cleanSubpath = rawSubpath
@@ -60,8 +62,7 @@ export function getEventsUrl(): string {
     return `${cleanWs}${cleanSubpath}/events`;
   }
 
-  const defaultWsProtocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const defaultWsHost = typeof window !== 'undefined' ? window.location.host : 'localhost:8000';
-  return `${defaultWsProtocol}//${defaultWsHost}/events`;
+  return '';
 }
+
 
