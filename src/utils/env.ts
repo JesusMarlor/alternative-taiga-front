@@ -16,3 +16,52 @@ export function getEnv(key: string, defaultValue: string = ''): string {
 
   return defaultValue;
 }
+
+/**
+ * Resolves the Taiga API base URL.
+ * Supports official Taiga variables (TAIGA_URL, TAIGA_SUBPATH) as well as VITE_API_BASE_URL.
+ */
+export function getApiBaseUrl(): string {
+  const directApi = getEnv('VITE_API_BASE_URL');
+  if (directApi) {
+    return directApi.replace(/\/+$/, '');
+  }
+
+  const taigaUrl = getEnv('TAIGA_URL');
+  if (taigaUrl) {
+    const cleanUrl = taigaUrl.replace(/\/+$/, '');
+    const rawSubpath = getEnv('TAIGA_SUBPATH', '');
+    const cleanSubpath = rawSubpath
+      ? (rawSubpath.startsWith('/') ? rawSubpath : `/${rawSubpath}`).replace(/\/+$/, '')
+      : '';
+    return `${cleanUrl}${cleanSubpath}/api/v1`;
+  }
+
+  return '/api/v1';
+}
+
+/**
+ * Resolves the Taiga WebSockets Events URL.
+ * Supports official Taiga variables (TAIGA_WEBSOCKETS_URL, TAIGA_SUBPATH) as well as VITE_EVENTS_URL.
+ */
+export function getEventsUrl(): string {
+  const directEvents = getEnv('VITE_EVENTS_URL');
+  if (directEvents) {
+    return directEvents.replace(/\/+$/, '');
+  }
+
+  const wsUrl = getEnv('TAIGA_WEBSOCKETS_URL');
+  if (wsUrl) {
+    const cleanWs = wsUrl.replace(/\/+$/, '');
+    const rawSubpath = getEnv('TAIGA_SUBPATH', '');
+    const cleanSubpath = rawSubpath
+      ? (rawSubpath.startsWith('/') ? rawSubpath : `/${rawSubpath}`).replace(/\/+$/, '')
+      : '';
+    return `${cleanWs}${cleanSubpath}/events`;
+  }
+
+  const defaultWsProtocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const defaultWsHost = typeof window !== 'undefined' ? window.location.host : 'localhost:8000';
+  return `${defaultWsProtocol}//${defaultWsHost}/events`;
+}
+

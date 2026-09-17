@@ -1,6 +1,6 @@
-import { getEnv } from '../utils/env';
+import { getApiBaseUrl } from '../utils/env';
 
-const API_BASE = getEnv('VITE_API_BASE_URL', '/api/v1');
+export const API_BASE = getApiBaseUrl();
 
 export class ApiError extends Error {
   constructor(public status: number, message: string, public data?: any) {
@@ -39,7 +39,8 @@ export async function apiRequest<T = any>(
   }
 
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const url = `${API_BASE}${cleanEndpoint}`;
+  const base = getApiBaseUrl();
+  const url = endpoint.startsWith('http') ? endpoint : `${base}${cleanEndpoint}`;
 
   const response = await fetch(url, {
     ...options,

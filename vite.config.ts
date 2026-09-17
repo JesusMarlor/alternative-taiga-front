@@ -5,10 +5,11 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const backendTarget = env.VITE_TAIGA_BACKEND_URL || 'http://localhost:8000';
+  const backendTarget = env.TAIGA_URL || env.VITE_TAIGA_BACKEND_URL || 'http://localhost:8000';
 
   return {
     plugins: [react()],
+    envPrefix: ['VITE_', 'TAIGA_'],
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname, './src'),
