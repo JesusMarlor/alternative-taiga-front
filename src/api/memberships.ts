@@ -8,15 +8,25 @@ export async function getProjectMemberships(projectId: number): Promise<ProjectM
 export async function createMembership(data: {
   project: number;
   role: number;
-  email?: string;
   username?: string;
+  email?: string;
   is_admin?: boolean;
 }): Promise<ProjectMember> {
+  const userIdentifier = data.username || data.email;
+  const payload: any = {
+    project: data.project,
+    role: data.role,
+    username: userIdentifier,
+    email: data.email || userIdentifier,
+    is_admin: !!data.is_admin,
+  };
+
   return apiRequest<ProjectMember>('/memberships', {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
 }
+
 
 export async function updateMembership(
   id: number,
