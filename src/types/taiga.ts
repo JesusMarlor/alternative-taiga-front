@@ -64,7 +64,29 @@ export interface RoleItem {
   slug?: string;
   order: number;
   computable?: boolean;
+  permissions?: string[];
+  project?: number;
 }
+
+export interface Webhook {
+  id: number;
+  project: number;
+  name: string;
+  url: string;
+  key?: string;
+  created_date?: string;
+  modified_date?: string;
+  logs_counter?: number;
+}
+
+export interface WebhookLog {
+  id: number;
+  webhook: number;
+  url: string;
+  status: number;
+  created_date: string;
+}
+
 
 export interface ProjectMember {
   id: number;

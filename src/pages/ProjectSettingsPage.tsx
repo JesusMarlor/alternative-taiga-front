@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useProjectStore } from '../stores/projectStore';
 import { updateProject } from '../api/projects';
+import { MembersSettingsSection } from '../components/admin/MembersSettingsSection';
+import { PermissionsSettingsSection } from '../components/admin/PermissionsSettingsSection';
+import { IntegrationsSettingsSection } from '../components/admin/IntegrationsSettingsSection';
 import { 
   Settings, 
   Save, 
@@ -12,14 +16,17 @@ import {
   Target, 
   AlertCircle, 
   BookOpen, 
-  Tag, 
   Users, 
-  AlertTriangle,
+  Sliders,
+  ShieldCheck,
+  Webhook as WebhookIcon,
   Loader2,
   Sparkles
 } from 'lucide-react';
 
 export const ProjectSettingsPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'project';
   const { currentProject, setCurrentProject } = useProjectStore();
 
   const [name, setName] = useState('');
@@ -35,6 +42,13 @@ export const ProjectSettingsPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const tabs = [
+    { id: 'project', label: 'PROYECTO', icon: Sliders },
+    { id: 'members', label: 'MIEMBROS', icon: Users },
+    { id: 'permissions', label: 'PERMISOS', icon: ShieldCheck },
+    { id: 'integrations', label: 'INTEGRACIONES', icon: WebhookIcon },
+  ];
 
   useEffect(() => {
     if (currentProject) {
@@ -83,51 +97,34 @@ export const ProjectSettingsPage: React.FC = () => {
     }
   };
 
-  return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-8">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400">
-            <Settings className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-              Configuración del Proyecto
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Administración de perfil, módulos activos y permisos de {currentProject.name}
-            </p>
-          </div>
+  const renderProjectForm = () => (
+    <form onSubmit={handleSave} className="space-y-6">
+      {/* Alerts */}
+      {saveSuccess && (
+        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2 animate-fade-in">
+          <Check className="w-4 h-4" />
+          <span>Configuración del proyecto guardada exitosamente en el servidor.</span>
         </div>
-      </div>
+      )}
 
-      <form onSubmit={handleSave} className="space-y-6">
-        {/* Alerts */}
-        {saveSuccess && (
-          <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2 animate-fade-in">
-            <Check className="w-4 h-4" />
-            <span>Configuración del proyecto guardada exitosamente en el servidor.</span>
-          </div>
-        )}
+      {errorMessage && (
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold flex items-center gap-2 animate-fade-in">
+          <AlertCircle className="w-4 h-4" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
 
-        {errorMessage && (
-          <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold flex items-center gap-2 animate-fade-in">
-            <AlertCircle className="w-4 h-4" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
+      {/* Section 1: Project Profile Details */}
+      <div className="bg-white dark:bg-slate-900/90 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-5">
+        <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white">
+            Perfil del Proyecto
+          </h2>
+          <p className="text-xs text-slate-500">
+            Detalles de identificación y visibilidad
+          </p>
+        </div>
 
-        {/* Section 1: Project Profile Details */}
-        <div className="bg-white dark:bg-slate-900/90 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-5">
-          <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">
-              Perfil del Proyecto
-            </h2>
-            <p className="text-xs text-slate-500">
-              Detalles de identificación y visibilidad
-            </p>
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
@@ -396,6 +393,63 @@ export const ProjectSettingsPage: React.FC = () => {
           </button>
         </div>
       </form>
+    );
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      {/* Top Header */}
+      <div className="border-b border-slate-200/80 dark:border-slate-800 pb-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400">
+            <Settings className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+              Administración del Proyecto
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {currentProject.name} &bull; Panel de control, equipo, permisos e integraciones
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Admin Layout: Sidebar navigation + Content */}
+      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-6 items-start">
+        {/* Sub-nav Tabs Menu */}
+        <div className="md:col-span-1">
+          <nav className="flex md:flex-col gap-1.5 overflow-x-auto pb-2 md:pb-0 sticky top-20">
+            {tabs.map((tab) => {
+              const TabIcon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setSearchParams({ tab: tab.id })}
+                  className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all text-left w-full whitespace-nowrap ${
+                    isActive
+                      ? 'bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 border border-brand-200/60 dark:border-brand-800/60 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <TabIcon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400'}`} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Tab Content Panel */}
+        <div className="md:col-span-3 lg:col-span-4 min-w-0">
+          {activeTab === 'project' && renderProjectForm()}
+          {activeTab === 'members' && <MembersSettingsSection />}
+          {activeTab === 'permissions' && <PermissionsSettingsSection />}
+          {activeTab === 'integrations' && <IntegrationsSettingsSection />}
+        </div>
+      </div>
     </div>
   );
 };
+

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useProjectStore } from '../stores/projectStore';
 import { UserAvatar } from '../components/shared/UserAvatar';
 import { 
@@ -6,7 +7,8 @@ import {
   ShieldCheck, 
   Mail, 
   Calendar,
-  Sparkles
+  Sparkles,
+  Settings
 } from 'lucide-react';
 
 export const TeamPage: React.FC = () => {
@@ -17,19 +19,30 @@ export const TeamPage: React.FC = () => {
   return (
     <div className="p-4 sm:p-6 space-y-6">
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-            Equipo del Proyecto
-          </h1>
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-500/10 text-brand-600 dark:text-brand-400">
-            {memberships.length} Integrantes
-          </span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+              Equipo del Proyecto
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-500/10 text-brand-600 dark:text-brand-400">
+              {memberships.length} Integrantes
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Miembros y roles asignados en {currentProject.name}
+          </p>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          Miembros y roles asignados en {currentProject.name}
-        </p>
+
+        <Link
+          to={`/project/${currentProject.slug}/settings?tab=members`}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-sm transition-all active:scale-[0.98] self-start sm:self-auto"
+        >
+          <Settings className="w-4 h-4" />
+          <span>Gestionar Miembros (Admin)</span>
+        </Link>
       </div>
+
 
       {/* Members Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

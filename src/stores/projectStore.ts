@@ -11,7 +11,12 @@ interface ProjectState {
   fetchProjects: () => Promise<Project[]>;
   selectProjectBySlug: (slug: string) => Promise<Project>;
   setCurrentProject: (project: Project) => void;
+  setMemberships: (memberships: ProjectMember[]) => void;
+  addMembershipToStore: (newMember: ProjectMember) => void;
+  updateMembershipInStore: (updated: ProjectMember) => void;
+  removeMembershipFromStore: (id: number) => void;
 }
+
 
 export const useProjectStore = create<ProjectState>((set, get) => ({
   currentProject: null,
@@ -65,4 +70,27 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   setCurrentProject: (project) => {
     set({ currentProject: project });
   },
+
+  setMemberships: (memberships) => {
+    set({ memberships });
+  },
+
+  addMembershipToStore: (newMember) => {
+    set((state) => ({
+      memberships: [...state.memberships, newMember],
+    }));
+  },
+
+  updateMembershipInStore: (updated) => {
+    set((state) => ({
+      memberships: state.memberships.map((m) => (m.id === updated.id ? updated : m)),
+    }));
+  },
+
+  removeMembershipFromStore: (id) => {
+    set((state) => ({
+      memberships: state.memberships.filter((m) => m.id !== id),
+    }));
+  },
 }));
+
