@@ -27,3 +27,46 @@ export async function deleteIssue(id: number): Promise<void> {
   });
 }
 
+export async function getIssueByRef(
+  projectId: number,
+  ref: number | string
+): Promise<Issue> {
+  return apiRequest<Issue>(`/issues/by_ref?project=${projectId}&ref=${ref}`);
+}
+
+export async function getIssueAttachments(
+  projectId: number,
+  issueId: number
+): Promise<import('../types/taiga').Attachment[]> {
+  return apiRequest<import('../types/taiga').Attachment[]>(
+    `/issues/attachments?project=${projectId}&object_id=${issueId}`
+  );
+}
+
+export async function uploadIssueAttachment(
+  projectId: number,
+  issueId: number,
+  file: File,
+  description: string = ''
+): Promise<import('../types/taiga').Attachment> {
+  const formData = new FormData();
+  formData.append('project', projectId.toString());
+  formData.append('object_id', issueId.toString());
+  formData.append('attached_file', file);
+  if (description) {
+    formData.append('description', description);
+  }
+
+  return apiRequest<import('../types/taiga').Attachment>('/issues/attachments', {
+    method: 'POST',
+    body: formData,
+  });
+}
+
+export async function deleteIssueAttachment(attachmentId: number): Promise<void> {
+  return apiRequest<void>(`/issues/attachments/${attachmentId}`, {
+    method: 'DELETE',
+  });
+}
+
+

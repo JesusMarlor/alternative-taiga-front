@@ -13,6 +13,8 @@ import { IssuesPage } from './pages/IssuesPage';
 import { WikiPageModule } from './pages/WikiPage';
 import { TeamPage } from './pages/TeamPage';
 import { ProjectSettingsPage } from './pages/ProjectSettingsPage';
+import { UserStoryDetailPage } from './pages/UserStoryDetailPage';
+import { IssueDetailPage } from './pages/IssueDetailPage';
 
 // Protected Route Guard
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -62,6 +64,9 @@ export function App() {
           <Route path="scrum" element={<ScrumPage />} />
           <Route path="epics" element={<EpicsPage />} />
           <Route path="issues" element={<IssuesPage />} />
+          <Route path="us/:ref" element={<UserStoryDetailPage />} />
+          <Route path="userstory/:ref" element={<UserStoryDetailPage />} />
+          <Route path="issue/:ref" element={<IssueDetailPage />} />
           <Route path="wiki" element={<WikiPageModule />} />
           <Route path="team" element={<TeamPage />} />
           <Route path="settings" element={<ProjectSettingsPage />} />

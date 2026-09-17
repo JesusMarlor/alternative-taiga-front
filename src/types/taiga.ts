@@ -200,11 +200,17 @@ export interface UserStory {
   is_closed: boolean;
   is_blocked?: boolean;
   blocked_note?: string;
+  blocked_note_html?: string;
   client_requirement?: boolean;
   team_requirement?: boolean;
   version: number;
   created_date: string;
   modified_date: string;
+  due_date?: string | null;
+  due_date_reason?: string;
+  due_date_status?: string;
+  total_comments?: number;
+  attachments?: Attachment[];
   tasks?: Task[];
   epics?: Array<{
     id: number;
@@ -212,6 +218,25 @@ export interface UserStory {
     subject: string;
     color: string;
   }> | null;
+  neighbors?: {
+    previous?: { id: number; ref: number; subject: string } | null;
+    next?: { id: number; ref: number; subject: string } | null;
+  };
+}
+
+export interface Attachment {
+  id: number;
+  project: number;
+  owner: number;
+  name: string;
+  size: number;
+  url: string;
+  description?: string;
+  is_deprecated?: boolean;
+  created_date: string;
+  modified_date?: string;
+  attached_file?: string;
+  from_comment?: boolean;
 }
 
 export interface Milestone {

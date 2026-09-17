@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useProjectStore } from '../stores/projectStore';
 import { getMilestones } from '../api/milestones';
 import { getUserStories } from '../api/userstories';
@@ -26,6 +27,7 @@ import {
 } from 'lucide-react';
 
 export const ScrumPage: React.FC = () => {
+  const navigate = useNavigate();
   const { currentProject } = useProjectStore();
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
@@ -86,8 +88,9 @@ export const ScrumPage: React.FC = () => {
 
   // Story click handler
   const handleStoryClick = (story: UserStory) => {
-    setEditingStory(story);
-    setIsEditStoryModalOpen(true);
+    if (currentProject) {
+      navigate(`/project/${currentProject.slug}/us/${story.ref}`);
+    }
   };
 
   const handleStoryUpdated = (updated: UserStory) => {
@@ -300,9 +303,18 @@ export const ScrumPage: React.FC = () => {
                             />
                           )}
 
-                          <div className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 group-hover:text-brand-500 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingStory(story);
+                              setIsEditStoryModalOpen(true);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-brand-500 transition-opacity"
+                            title="Edición rápida"
+                          >
                             <Pencil className="w-3.5 h-3.5" />
-                          </div>
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -396,9 +408,18 @@ export const ScrumPage: React.FC = () => {
                           size="xs"
                         />
                       )}
-                      <div className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 group-hover:text-brand-500 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingStory(story);
+                          setIsEditStoryModalOpen(true);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-brand-500 transition-opacity"
+                        title="Edición rápida"
+                      >
                         <Pencil className="w-3.5 h-3.5" />
-                      </div>
+                      </button>
                     </div>
                   </div>
                 ))}

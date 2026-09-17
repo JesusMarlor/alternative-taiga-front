@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useProjectStore } from '../stores/projectStore';
 import { getIssues } from '../api/issues';
 import { Issue } from '../types/taiga';
@@ -19,7 +20,8 @@ import {
 } from 'lucide-react';
 
 export const IssuesPage: React.FC = () => {
-  const { currentProject, memberships } = useProjectStore();
+  const navigate = useNavigate();
+  const { currentProject } = useProjectStore();
   const [issues, setIssues] = useState<Issue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -47,8 +49,9 @@ export const IssuesPage: React.FC = () => {
   );
 
   const handleIssueClick = (issue: Issue) => {
-    setSelectedIssue(issue);
-    setIsEditModalOpen(true);
+    if (currentProject) {
+      navigate(`/project/${currentProject.slug}/issue/${issue.ref}`);
+    }
   };
 
   const handleIssueUpdated = (updated: Issue) => {
@@ -191,9 +194,18 @@ export const IssuesPage: React.FC = () => {
                       )}
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <div className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 group-hover:text-rose-500 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedIssue(issue);
+                          setIsEditModalOpen(true);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-rose-500 transition-all"
+                        title="Edición rápida"
+                      >
                         <Pencil className="w-3.5 h-3.5 ml-auto" />
-                      </div>
+                      </button>
                     </td>
                   </tr>
                 ))}

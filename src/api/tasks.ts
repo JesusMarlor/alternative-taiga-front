@@ -22,3 +22,19 @@ export async function createTask(
     body: JSON.stringify(data),
   });
 }
+
+export async function getTasksByStory(
+  projectId: number,
+  storyId: number
+): Promise<Task[]> {
+  return apiRequest<Task[]>(
+    `/tasks?order_by=us_order&project=${projectId}&user_story=${storyId}`
+  );
+}
+
+export async function deleteTask(id: number): Promise<void> {
+  return apiRequest<void>(`/tasks/${id}`, {
+    method: 'DELETE',
+  });
+}
+

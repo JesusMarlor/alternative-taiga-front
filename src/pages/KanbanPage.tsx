@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useProjectStore } from '../stores/projectStore';
 import { getUserStories, updateUserStory } from '../api/userstories';
 import { useTaigaLiveEvents } from '../api/events';
@@ -25,6 +26,7 @@ import {
 } from 'lucide-react';
 
 export const KanbanPage: React.FC = () => {
+  const navigate = useNavigate();
   const { currentProject, memberships } = useProjectStore();
   const [stories, setStories] = useState<UserStory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -231,12 +233,12 @@ export const KanbanPage: React.FC = () => {
                     columnStories.map((story) => (
                       <div
                         key={story.id}
-                        onClick={() => setSelectedStory(story)}
+                        onClick={() => navigate(`/project/${currentProject.slug}/us/${story.ref}`)}
                         className="group bg-white dark:bg-slate-800/90 rounded-xl p-3.5 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500/60 shadow-xs hover:shadow-md transition-all cursor-pointer space-y-2.5 relative"
                       >
                         {/* Top: Ref & Points */}
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-mono font-bold text-slate-400 dark:text-slate-500">
+                          <span className="text-[11px] font-mono font-bold text-[#008db8]">
                             #{story.ref}
                           </span>
 
@@ -251,6 +253,17 @@ export const KanbanPage: React.FC = () => {
                                 {story.milestone_name}
                               </span>
                             )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedStory(story);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-brand-600 transition-all"
+                              title="Edición rápida"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
                           </div>
                         </div>
 
