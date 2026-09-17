@@ -161,7 +161,16 @@ export const CreateIssueModal: React.FC<CreateIssueModalProps> = ({
       onClose();
     } catch (err: any) {
       console.error('Error creating issue:', err);
-      setErrorMessage(err?.data?._error_message || err.message || 'Error al registrar la incidencia');
+      let msg = err?.data?._error_message || err?.data?.detail;
+      if (!msg && err?.data && typeof err.data === 'object') {
+        const entries = Object.entries(err.data);
+        if (entries.length > 0) {
+          const [field, val] = entries[0];
+          const errorText = Array.isArray(val) ? val[0] : (typeof val === 'string' ? val : JSON.stringify(val));
+          msg = `${field}: ${errorText}`;
+        }
+      }
+      setErrorMessage(msg || err.message || 'Error al registrar la incidencia');
     } finally {
       setIsSubmitting(false);
     }

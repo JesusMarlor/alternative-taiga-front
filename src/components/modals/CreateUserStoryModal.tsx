@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useProjectStore } from '../../stores/projectStore';
 import { createUserStory } from '../../api/userstories';
 import { getMilestones } from '../../api/milestones';
-import { UserStory, Milestone } from '../../types/taiga';
+import { getRoles } from '../../api/roles';
+import { UserStory, Milestone, RoleItem } from '../../types/taiga';
 import { 
   X, 
   Loader2, 
@@ -33,6 +34,7 @@ export const CreateUserStoryModal: React.FC<CreateUserStoryModalProps> = ({
 }) => {
   const { currentProject, memberships } = useProjectStore();
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [projectRoles, setProjectRoles] = useState<RoleItem[]>([]);
 
   // Form states
   const [subject, setSubject] = useState('');
@@ -52,12 +54,19 @@ export const CreateUserStoryModal: React.FC<CreateUserStoryModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Load project milestones when modal opens
+  // Load project milestones and roles when modal opens
   useEffect(() => {
     if (isOpen && currentProject) {
       getMilestones(currentProject.id)
         .then((data) => setMilestones(data))
         .catch((err) => console.warn('Could not load milestones:', err));
+
+      if (currentProject.roles && currentProject.roles.length > 0) {
+        setProjectRoles(currentProject.roles);
+      }
+      getRoles(currentProject.id)
+        .then((roles) => setProjectRoles(roles))
+        .catch((err) => console.warn('Could not load roles:', err));
     }
   }, [isOpen, currentProject]);
 
@@ -161,13 +170,18 @@ export const CreateUserStoryModal: React.FC<CreateUserStoryModalProps> = ({
         payload.team_requirement = true;
       }
 
-      // If specific points are selected, set points for all project roles
-      if (selectedPointId !== '' && currentProject.roles && currentProject.roles.length > 0) {
-        const pointsMap: Record<string, number> = {};
-        currentProject.roles.forEach((r) => {
-          pointsMap[r.id.toString()] = Number(selectedPointId);
-        });
-        payload.points = pointsMap;
+      // In Taiga, only computable roles can have points.
+      // If selectedPointId matches default or is empty, omit points so Taiga handles default assignment natively.
+      if (selectedPointId !== '' && selectedPointId !== currentProject.default_points) {
+        const availableRoles = projectRoles.length > 0 ? projectRoles : (currentProject.roles || []);
+        const computableRoles = availableRoles.filter((r) => r.computable === true);
+        if (computableRoles.length > 0) {
+          const pointsMap: Record<string, number> = {};
+          computableRoles.forEach((r) => {
+            pointsMap[r.id.toString()] = Number(selectedPointId);
+          });
+          payload.points = pointsMap;
+        }
       }
 
       const created = await createUserStory(payload);
@@ -175,7 +189,16 @@ export const CreateUserStoryModal: React.FC<CreateUserStoryModalProps> = ({
       onClose();
     } catch (err: any) {
       console.error('Error creating user story:', err);
-      setErrorMessage(err?.data?._error_message || err.message || 'Error al crear la historia de usuario');
+      let msg = err?.data?._error_message || err?.data?.detail;
+      if (!msg && err?.data && typeof err.data === 'object') {
+        const entries = Object.entries(err.data);
+        if (entries.length > 0) {
+          const [field, val] = entries[0];
+          const errorText = Array.isArray(val) ? val[0] : (typeof val === 'string' ? val : JSON.stringify(val));
+          msg = `${field}: ${errorText}`;
+        }
+      }
+      setErrorMessage(msg || err.message || 'Error al crear la historia de usuario');
     } finally {
       setIsSubmitting(false);
     }
