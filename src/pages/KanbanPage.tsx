@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProjectStore } from '../stores/projectStore';
 import { getUserStories, updateUserStory, getUserStoryByRef, getUserStoryAttachments } from '../api/userstories';
@@ -25,7 +25,8 @@ import {
   Calendar,
   Pencil,
   ExternalLink,
-  Paperclip
+  Paperclip,
+  GripVertical
 } from 'lucide-react';
 
 export const KanbanPage: React.FC = () => {
@@ -44,6 +45,11 @@ export const KanbanPage: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createStatusId, setCreateStatusId] = useState<number | undefined>(undefined);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Drag and Drop state
+  const [draggedStoryId, setDraggedStoryId] = useState<number | null>(null);
+  const [dragOverStatusId, setDragOverStatusId] = useState<number | null>(null);
+  const isDraggingRef = useRef(false);
 
   // Fetch full details when a story is clicked on the board
   useEffect(() => {
@@ -112,7 +118,12 @@ export const KanbanPage: React.FC = () => {
   });
 
   const handleStatusChange = async (storyId: number, nextStatusId: number) => {
+    const currentStory = stories.find((s) => s.id === storyId);
+    if (!currentStory || currentStory.status === nextStatusId) return;
+
     const targetStatus = statuses.find((s) => s.id === nextStatusId);
+    const previousStories = [...stories];
+
     // Optimistic update
     setStories((prev) =>
       prev.map((st) =>
@@ -120,6 +131,7 @@ export const KanbanPage: React.FC = () => {
           ? {
               ...st,
               status: nextStatusId,
+              version: (st.version ?? 0) + 1,
               status_extra_info: targetStatus
                 ? {
                     name: targetStatus.name,
@@ -142,14 +154,33 @@ export const KanbanPage: React.FC = () => {
     }
 
     try {
-      await updateUserStory(storyId, { status: nextStatusId });
-    } catch (err) {
+      const payload: { status: number; version?: number } = {
+        status: nextStatusId,
+      };
+      if (typeof currentStory.version === 'number') {
+        payload.version = currentStory.version;
+      }
+      const updated = await updateUserStory(storyId, payload);
+      setStories((prev) =>
+        prev.map((st) => (st.id === storyId ? { ...st, ...updated } : st))
+      );
+      if (selectedStory?.id === storyId) {
+        setSelectedStory((prev) => (prev ? { ...prev, ...updated } : null));
+      }
+      if (storyDetail?.id === storyId) {
+        setStoryDetail((prev) => (prev ? { ...prev, ...updated } : null));
+      }
+    } catch (err: any) {
       console.error('Failed to update status', err);
       // Revert on error
-      if (currentProject) {
-        const refreshed = await getUserStories(currentProject.id);
-        setStories(refreshed);
-      }
+      setStories(previousStories);
+      const errMsg =
+        err?.data?._error_message ||
+        err?.data?.version ||
+        (typeof err?.data === 'object' ? JSON.stringify(err.data) : null) ||
+        err?.message ||
+        'Error al cambiar el estado de la historia';
+      alert(`Error al cambiar el estado: ${errMsg}`);
     }
   };
 
@@ -222,11 +253,46 @@ export const KanbanPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 overflow-x-auto pb-4">
           {statuses.map((status) => {
             const columnStories = filteredStories.filter((s) => s.status === status.id);
+            const isOverColumn = dragOverStatusId === status.id;
+            const draggedStory = stories.find((s) => s.id === draggedStoryId);
+            const isFromDifferentColumn = draggedStory && draggedStory.status !== status.id;
+            const showDropIndicator = isOverColumn && isFromDifferentColumn;
 
             return (
               <div
                 key={status.id}
-                className="flex flex-col bg-slate-100/70 dark:bg-slate-900/60 rounded-2xl border border-slate-200/70 dark:border-slate-800/80 p-3 min-w-[280px]"
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                  if (dragOverStatusId !== status.id) {
+                    setDragOverStatusId(status.id);
+                  }
+                }}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  setDragOverStatusId(status.id);
+                }}
+                onDragLeave={(e) => {
+                  if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                  if (dragOverStatusId === status.id) {
+                    setDragOverStatusId(null);
+                  }
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const storyIdStr = e.dataTransfer.getData('text/plain') || String(draggedStoryId);
+                  const storyId = Number(storyIdStr);
+                  setDragOverStatusId(null);
+                  setDraggedStoryId(null);
+                  if (storyId) {
+                    handleStatusChange(storyId, status.id);
+                  }
+                }}
+                className={`flex flex-col rounded-2xl border transition-all duration-200 p-3 min-w-[280px] ${
+                  showDropIndicator
+                    ? 'bg-brand-50/70 dark:bg-brand-950/30 border-brand-500 ring-2 ring-brand-500/50 shadow-md'
+                    : 'bg-slate-100/70 dark:bg-slate-900/60 border-slate-200/70 dark:border-slate-800/80'
+                }`}
               >
                 {/* Column Header */}
                 <div className="flex items-center justify-between pb-3 px-1 border-b border-slate-200/60 dark:border-slate-800/60 mb-3">
@@ -258,8 +324,15 @@ export const KanbanPage: React.FC = () => {
                 </div>
 
                 {/* Cards List */}
-                <div className="flex-1 space-y-2.5 min-h-[300px]">
-                  {columnStories.length === 0 ? (
+                <div className="flex-1 space-y-2.5 min-h-[300px] flex flex-col">
+                  {showDropIndicator && (
+                    <div className="p-3 border-2 border-dashed border-brand-500/80 bg-brand-500/10 dark:bg-brand-500/15 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-brand-600 dark:text-brand-400 animate-pulse">
+                      <MoveRight className="w-4 h-4" />
+                      <span>Mover a {status.name}</span>
+                    </div>
+                  )}
+
+                  {columnStories.length === 0 && !showDropIndicator ? (
                     <div className="h-32 border-2 border-dashed border-slate-200 dark:border-slate-800/80 rounded-xl flex items-center justify-center text-[11px] text-slate-400">
                       Sin historias aquí
                     </div>
@@ -267,21 +340,45 @@ export const KanbanPage: React.FC = () => {
                     columnStories.map((story) => (
                       <div
                         key={story.id}
-                        onClick={() => setSelectedStory(story)}
-                        className="group bg-white dark:bg-slate-800/90 rounded-xl p-3.5 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500/60 shadow-xs hover:shadow-md transition-all cursor-pointer space-y-2.5 relative"
+                        draggable
+                        onDragStart={(e) => {
+                          isDraggingRef.current = true;
+                          e.dataTransfer.setData('text/plain', String(story.id));
+                          e.dataTransfer.effectAllowed = 'move';
+                          setDraggedStoryId(story.id);
+                        }}
+                        onDragEnd={() => {
+                          setDraggedStoryId(null);
+                          setDragOverStatusId(null);
+                          setTimeout(() => {
+                            isDraggingRef.current = false;
+                          }, 150);
+                        }}
+                        onClick={() => {
+                          if (isDraggingRef.current) return;
+                          setSelectedStory(story);
+                        }}
+                        className={`group bg-white dark:bg-slate-800/90 rounded-xl p-3.5 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500/60 shadow-xs hover:shadow-md transition-all cursor-grab active:cursor-grabbing space-y-2.5 relative ${
+                          draggedStoryId === story.id
+                            ? 'opacity-40 ring-2 ring-brand-500 border-dashed scale-[0.98]'
+                            : ''
+                        }`}
                       >
                         {/* Top: Ref & Points */}
                         <div className="flex items-center justify-between">
-                          <span
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/project/${currentProject.slug}/us/${story.ref}`);
-                            }}
-                            className="text-[11px] font-mono font-bold text-[#008db8] hover:underline cursor-pointer"
-                            title="Abrir página completa"
-                          >
-                            #{story.ref}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <GripVertical className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:text-brand-500 transition-colors flex-shrink-0 cursor-grab" />
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/project/${currentProject.slug}/us/${story.ref}`);
+                              }}
+                              className="text-[11px] font-mono font-bold text-[#008db8] hover:underline cursor-pointer"
+                              title="Abrir página completa"
+                            >
+                              #{story.ref}
+                            </span>
+                          </div>
 
                           <div className="flex items-center gap-1.5">
                             {story.total_points !== null && story.total_points !== undefined && (
