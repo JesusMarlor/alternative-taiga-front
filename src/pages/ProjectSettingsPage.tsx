@@ -5,6 +5,7 @@ import { updateProject } from '../api/projects';
 import { MembersSettingsSection } from '../components/admin/MembersSettingsSection';
 import { PermissionsSettingsSection } from '../components/admin/PermissionsSettingsSection';
 import { IntegrationsSettingsSection } from '../components/admin/IntegrationsSettingsSection';
+import { PluginsSettingsSection } from '../components/admin/PluginsSettingsSection';
 import { 
   Settings, 
   Save, 
@@ -21,7 +22,8 @@ import {
   ShieldCheck,
   Webhook as WebhookIcon,
   Loader2,
-  Sparkles
+  Sparkles,
+  Blocks
 } from 'lucide-react';
 
 export const ProjectSettingsPage: React.FC = () => {
@@ -48,6 +50,7 @@ export const ProjectSettingsPage: React.FC = () => {
     { id: 'members', label: 'MIEMBROS', icon: Users },
     { id: 'permissions', label: 'PERMISOS', icon: ShieldCheck },
     { id: 'integrations', label: 'INTEGRACIONES', icon: WebhookIcon },
+    { id: 'plugins', label: 'PLUGINS', icon: Blocks },
   ];
 
   useEffect(() => {
@@ -447,6 +450,7 @@ export const ProjectSettingsPage: React.FC = () => {
           {activeTab === 'members' && <MembersSettingsSection />}
           {activeTab === 'permissions' && <PermissionsSettingsSection />}
           {activeTab === 'integrations' && <IntegrationsSettingsSection />}
+          {activeTab === 'plugins' && <PluginsSettingsSection />}
         </div>
       </div>
     </div>

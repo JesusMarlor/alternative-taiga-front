@@ -369,3 +369,27 @@ export interface WikiPage {
   last_modifier?: number;
   version?: number;
 }
+
+export interface SlackHook {
+  id?: number;
+  project: number;
+  url: string;
+  channel?: string;
+  notify_epic_create: boolean;
+  notify_epic_change: boolean;
+  notify_epic_delete: boolean;
+  notify_relateduserstory_create: boolean;
+  notify_relateduserstory_delete: boolean;
+  notify_userstory_create: boolean;
+  notify_userstory_change: boolean;
+  notify_userstory_delete: boolean;
+  notify_task_create: boolean;
+  notify_task_change: boolean;
+  notify_task_delete: boolean;
+  notify_issue_create: boolean;
+  notify_issue_change: boolean;
+  notify_issue_delete: boolean;
+  notify_wikipage_create: boolean;
+  notify_wikipage_change: boolean;
+  notify_wikipage_delete: boolean;
+}

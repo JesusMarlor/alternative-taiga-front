@@ -1,0 +1,37 @@
+Build and push docker
+
+```
+docker buildx build --platform linux/amd64 -t jesusmarfil/alternative-taiga-front:latest --push .
+```
+
+VPS 
+
+```
+docker compose pull taiga-front
+docker compose up -d taiga-front
+```
+
+Notes:
+Asegurate que el docker-composer.yml tenga el respositorio de docker:
+
+```
+ taiga-front:
+    image: jesusmarfil/alternative-taiga-front:latest
+    environment:
+      TAIGA_URL: "${TAIGA_SCHEME}://${TAIGA_DOMAIN}"
+      TAIGA_WEBSOCKETS_URL: "${WEBSOCKETS_SCHEME}://${TAIGA_DOMAIN}"
+      TAIGA_SUBPATH: "${SUBPATH}"
+      # ...your customizations go here
+```
+
+Original:
+
+```
+ taiga-front:
+    image: taigaio/taiga-front:latest
+    environment:
+      TAIGA_URL: "${TAIGA_SCHEME}://${TAIGA_DOMAIN}"
+      TAIGA_WEBSOCKETS_URL: "${WEBSOCKETS_SCHEME}://${TAIGA_DOMAIN}"
+      TAIGA_SUBPATH: "${SUBPATH}"
+      # ...your customizations go here
+```
