@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useProjectStore } from '../stores/projectStore';
 import { getUserStories, updateUserStory, getUserStoryByRef, getUserStoryAttachments } from '../api/userstories';
 import { getTasksByStory } from '../api/tasks';
@@ -31,12 +31,24 @@ import {
 
 export const KanbanPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { currentProject, memberships } = useProjectStore();
   const [stories, setStories] = useState<UserStory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedAssignee, setSelectedAssignee] = useState<number | 'all'>('all');
-  const [selectedMilestone, setSelectedMilestone] = useState<number | 'all'>('all');
+  const [selectedMilestone, setSelectedMilestone] = useState<number | 'all'>(() => {
+    const ms = searchParams.get('milestone');
+    return ms ? Number(ms) : 'all';
+  });
+
+  useEffect(() => {
+    const ms = searchParams.get('milestone');
+    if (ms) {
+      setSelectedMilestone(Number(ms));
+    }
+  }, [searchParams]);
+
   const [selectedStory, setSelectedStory] = useState<UserStory | null>(null);
   const [storyDetail, setStoryDetail] = useState<UserStory | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
