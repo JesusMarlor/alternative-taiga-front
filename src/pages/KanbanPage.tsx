@@ -548,13 +548,13 @@ export const KanbanPage: React.FC = () => {
                     <Loader2 className="w-4 h-4 animate-spin text-brand-600" />
                     <span>Cargando descripción completa...</span>
                   </div>
-                ) : (storyDetail?.description_html || storyDetail?.description) ? (
+                ) : storyDetail?.description_html ? (
                   <div
                     className="taiga-wysiwyg-content select-text"
-                    dangerouslySetInnerHTML={{
-                      __html: storyDetail.description_html || storyDetail.description || '',
-                    }}
+                    dangerouslySetInnerHTML={{ __html: storyDetail.description_html }}
                   />
+                ) : storyDetail?.description ? (
+                  <div className="taiga-wysiwyg-content select-text whitespace-pre-wrap">{storyDetail.description}</div>
                 ) : (
                   <span className="text-slate-400 italic">
                     Sin descripción detallada disponible.

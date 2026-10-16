@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useProjectStore } from '../stores/projectStore';
 import { getMilestones } from '../api/milestones';
 import { getUserStories, updateUserStory, deleteUserStory } from '../api/userstories';
+import { useTaigaLiveEvents } from '../api/events';
 import { Milestone, UserStory, StatusItem } from '../types/taiga';
 import { CreateUserStoryModal } from '../components/modals/CreateUserStoryModal';
 import { EditUserStoryModal } from '../components/modals/EditUserStoryModal';
@@ -77,9 +78,9 @@ export const ScrumPage: React.FC = () => {
   }, []);
 
   // Fetch project sprints and stories
-  useEffect(() => {
+  const loadData = useCallback((showLoading = true) => {
     if (!currentProject) return;
-    setIsLoading(true);
+    if (showLoading) setIsLoading(true);
 
     Promise.all([
       getMilestones(currentProject.id),
@@ -90,8 +91,17 @@ export const ScrumPage: React.FC = () => {
         setStories(storiesData);
       })
       .catch((err) => console.error('Error loading scrum data:', err))
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        if (showLoading) setIsLoading(false);
+      });
   }, [currentProject]);
+
+  useEffect(() => {
+    loadData(true);
+  }, [loadData]);
+
+  // Keep backlog and sprints in sync with changes made by other team members
+  useTaigaLiveEvents(currentProject?.id, () => loadData(false));
 
   if (!currentProject) return null;
 
@@ -1038,7 +1048,7 @@ export const ScrumPage: React.FC = () => {
                               type="button"
                               onClick={() =>
                                 navigate(
-                                  `/project/${currentProject.slug}/kanban?milestone=${sprint.id}`
+                                  `/project/${currentProject.slug}/taskboard/${sprint.id}`
                                 )
                               }
                               className="w-full py-1.5 px-3 rounded-lg bg-[#008db8] hover:bg-[#007498] text-white text-[11px] font-bold uppercase tracking-wider text-center shadow-xs transition-colors"

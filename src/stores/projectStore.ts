@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Project, ProjectMember } from '../types/taiga';
+import { useAuthStore } from './authStore';
 import { getProjects, getProjectBySlug, getProjectMemberships } from '../api/projects';
 
 interface ProjectState {
@@ -28,7 +29,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   fetchProjects: async () => {
     set({ isLoading: true, error: null });
     try {
-      const projects = await getProjects();
+      const projects = await getProjects(useAuthStore.getState().user?.id);
       set({ projects, isLoading: false });
       return projects;
     } catch (err: any) {
@@ -44,7 +45,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       return current;
     }
 
-    set({ isLoading: true, error: null });
+    set({ currentProject: null, memberships: [], isLoading: true, error: null });
     try {
       const project = await getProjectBySlug(slug);
       let memberships: ProjectMember[] = [];

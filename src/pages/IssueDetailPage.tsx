@@ -11,6 +11,7 @@ import {
 } from '../api/issues';
 import { Issue, Attachment, StatusItem } from '../types/taiga';
 import { UserAvatar } from '../components/shared/UserAvatar';
+import { HistorySection } from '../components/shared/HistorySection';
 import {
   ChevronLeft,
   Trash2,
@@ -573,15 +574,15 @@ export const IssueDetailPage: React.FC = () => {
                       placeholder="Escribe la descripción de la incidencia (soporta Markdown)..."
                     />
                   </div>
-                ) : (
+                ) : issue.description_html ? (
                   <div
                     className="taiga-wysiwyg-content select-text"
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        issue.description ||
-                        '<p class="text-slate-400 italic">Sin descripción proporcionada.</p>',
-                    }}
+                    dangerouslySetInnerHTML={{ __html: issue.description_html }}
                   />
+                ) : (
+                  <div className="taiga-wysiwyg-content select-text whitespace-pre-wrap">
+                    {issue.description || <p className="text-slate-400 italic">Sin descripción proporcionada.</p>}
+                  </div>
                 )}
               </div>
             </div>
@@ -675,6 +676,16 @@ export const IssueDetailPage: React.FC = () => {
                 </div>
               )}
             </div>
+
+            <HistorySection
+              contentType="issue"
+              objectId={issue.id}
+              version={issue.version}
+              onAddComment={async (text) => {
+                const updated = await updateIssue(issue.id, { comment: text, version: issue.version });
+                setIssue(updated);
+              }}
+            />
           </div>
 
           {/* Sidebar */}

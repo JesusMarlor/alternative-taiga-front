@@ -7,7 +7,7 @@ export async function getTasks(projectId: number, milestoneId?: number): Promise
   return apiRequest<Task[]>(`/tasks?${query.toString()}`);
 }
 
-export async function updateTask(id: number, data: Partial<Task>): Promise<Task> {
+export async function updateTask(id: number, data: Partial<Task> & { comment?: string }): Promise<Task> {
   return apiRequest<Task>(`/tasks/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),

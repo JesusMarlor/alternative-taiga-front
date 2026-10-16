@@ -18,9 +18,48 @@ export function getSessionId(): string {
   return sid;
 }
 
+let refreshPromise: Promise<boolean> | null = null;
+
+// Taiga access tokens expire (24h by default); swap the refresh token for a new pair once, shared by concurrent 401s
+function refreshAccessToken(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      const refresh = localStorage.getItem('taiga_refresh');
+      if (!refresh) return false;
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh }),
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        localStorage.setItem('taiga_token', data.auth_token);
+        if (data.refresh) localStorage.setItem('taiga_refresh', data.refresh);
+        return true;
+      } catch {
+        return false;
+      }
+    })().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
+function expireSession() {
+  localStorage.removeItem('taiga_token');
+  localStorage.removeItem('taiga_refresh');
+  localStorage.removeItem('taiga_user');
+  if (!window.location.pathname.startsWith('/login')) {
+    window.location.href = '/login';
+  }
+}
+
 export async function apiRequest<T = any>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  isRetry = false
 ): Promise<T> {
   const token = localStorage.getItem('taiga_token');
   const sessionId = getSessionId();
@@ -38,6 +77,11 @@ export async function apiRequest<T = any>(
     headers.set('x-session-id', sessionId);
   }
 
+  // Taiga paginates list endpoints server-side; without this only the first page is returned
+  if ((!options.method || options.method.toUpperCase() === 'GET') && !headers.has('x-disable-pagination')) {
+    headers.set('x-disable-pagination', '1');
+  }
+
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   const base = getApiBaseUrl();
   const url = endpoint.startsWith('http') ? endpoint : `${base}${cleanEndpoint}`;
@@ -47,11 +91,11 @@ export async function apiRequest<T = any>(
     headers,
   });
 
-  if (response.status === 401) {
-    // If unauthorized and not on auth endpoint, notify or clear
-    if (!endpoint.includes('/auth')) {
-      console.warn('Authentication token expired or invalid');
+  if (response.status === 401 && token && !endpoint.startsWith('/auth')) {
+    if (!isRetry && (await refreshAccessToken())) {
+      return apiRequest<T>(endpoint, options, true);
     }
+    expireSession();
   }
 
   if (!response.ok) {

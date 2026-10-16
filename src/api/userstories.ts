@@ -29,7 +29,7 @@ export async function getUserStory(id: number): Promise<UserStory> {
 
 export async function updateUserStory(
   id: number,
-  data: Partial<UserStory>
+  data: Partial<UserStory> & { comment?: string }
 ): Promise<UserStory> {
   return apiRequest<UserStory>(`/userstories/${id}`, {
     method: 'PATCH',

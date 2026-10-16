@@ -324,8 +324,8 @@ export const EditUserStoryModal: React.FC<EditUserStoryModalProps> = ({
 
     try {
       const updated = await updateTask(task.id, {
-        is_closed: nextClosed,
         status: nextStatus,
+        version: task.version,
       });
       setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, ...updated } : t)));
     } catch (err: any) {
@@ -694,15 +694,16 @@ export const EditUserStoryModal: React.FC<EditUserStoryModalProps> = ({
                 </div>
               ) : (
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 min-h-[160px] max-h-[300px] overflow-y-auto">
-                  <div
-                    className="taiga-wysiwyg-content select-text"
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        descriptionHtml ||
-                        description ||
-                        '<p class="text-slate-400 italic">Sin descripción proporcionada.</p>',
-                    }}
-                  />
+                  {descriptionHtml ? (
+                    <div
+                      className="taiga-wysiwyg-content select-text"
+                      dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+                    />
+                  ) : (
+                    <div className="taiga-wysiwyg-content select-text whitespace-pre-wrap">
+                      {description || <p className="text-slate-400 italic">Sin descripción proporcionada.</p>}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

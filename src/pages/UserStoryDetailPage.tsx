@@ -12,6 +12,7 @@ import {
 import { getTasksByStory, createTask, updateTask, deleteTask } from '../api/tasks';
 import { UserStory, Task, Attachment, StatusItem } from '../types/taiga';
 import { UserAvatar } from '../components/shared/UserAvatar';
+import { HistorySection } from '../components/shared/HistorySection';
 import {
   ChevronLeft,
   ChevronRight,
@@ -349,8 +350,8 @@ export const UserStoryDetailPage: React.FC = () => {
 
     try {
       const updated = await updateTask(task.id, {
-        is_closed: nextClosed,
         status: nextStatus,
+        version: task.version,
       });
       setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, ...updated } : t)));
     } catch (err: any) {
@@ -811,16 +812,15 @@ export const UserStoryDetailPage: React.FC = () => {
                       Soporta sintaxis Markdown completa: títulos (#), negritas (**), listas (-), código (`), etc.
                     </p>
                   </div>
-                ) : (
+                ) : story.description_html ? (
                   <div
                     className="taiga-wysiwyg-content select-text"
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        story.description_html ||
-                        story.description ||
-                        '<p class="text-slate-400 italic">Sin descripción proporcionada.</p>',
-                    }}
+                    dangerouslySetInnerHTML={{ __html: story.description_html }}
                   />
+                ) : (
+                  <div className="taiga-wysiwyg-content select-text whitespace-pre-wrap">
+                    {story.description || <p className="text-slate-400 italic">Sin descripción proporcionada.</p>}
+                  </div>
                 )}
               </div>
             </div>
@@ -1039,6 +1039,16 @@ export const UserStoryDetailPage: React.FC = () => {
                 </div>
               )}
             </div>
+
+            <HistorySection
+              contentType="userstory"
+              objectId={story.id}
+              version={story.version}
+              onAddComment={async (text) => {
+                const updated = await updateUserStory(story.id, { comment: text, version: story.version });
+                setStory(updated);
+              }}
+            />
           </div>
 
           {/* Sidebar / Metadata Panel */}

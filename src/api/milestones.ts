@@ -1,5 +1,5 @@
 import { apiRequest } from './client';
-import { Milestone } from '../types/taiga';
+import { Milestone, MilestoneStats } from '../types/taiga';
 
 export async function getMilestones(projectId: number): Promise<Milestone[]> {
   return apiRequest<Milestone[]>(`/milestones?project=${projectId}`);
@@ -34,3 +34,7 @@ export async function deleteMilestone(id: number): Promise<void> {
   });
 }
 
+
+export async function getMilestoneStats(id: number): Promise<MilestoneStats> {
+  return apiRequest<MilestoneStats>(`/milestones/${id}/stats`);
+}

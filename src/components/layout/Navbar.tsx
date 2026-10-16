@@ -17,7 +17,8 @@ import {
   Layers,
   Radio,
   Wifi,
-  WifiOff
+  WifiOff,
+  UserRound
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -100,7 +101,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       key={p.id}
                       onClick={() => {
                         setIsProjectDropdownOpen(false);
-                        navigate(`/project/${p.slug}/kanban`);
+                        navigate(`/project/${p.slug}`);
                       }}
                       className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors ${
                         p.id === currentProject.id
@@ -203,6 +204,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
 
                 <div className="py-1">
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsUserDropdownOpen(false)}
+                    className="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2"
+                  >
+                    <UserRound className="w-3.5 h-3.5 text-brand-500" />
+                    Mi perfil
+                  </Link>
+
                   <button
                     onClick={() => {
                       setIsUserDropdownOpen(false);

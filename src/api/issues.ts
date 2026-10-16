@@ -5,7 +5,7 @@ export async function getIssues(projectId: number): Promise<Issue[]> {
   return apiRequest<Issue[]>(`/issues?project=${projectId}`);
 }
 
-export async function updateIssue(id: number, data: Partial<Issue>): Promise<Issue> {
+export async function updateIssue(id: number, data: Partial<Issue> & { comment?: string }): Promise<Issue> {
   return apiRequest<Issue>(`/issues/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),

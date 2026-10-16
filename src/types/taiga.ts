@@ -279,6 +279,9 @@ export interface Task {
     photo?: string | null;
   } | null;
   is_closed: boolean;
+  is_blocked?: boolean;
+  milestone?: number | null;
+  taskboard_order?: number;
   project: number;
   created_date: string;
   modified_date: string;
@@ -286,6 +289,7 @@ export interface Task {
 }
 
 export interface Issue {
+  description_html?: string;
   id: number;
   ref: number;
   subject: string;
@@ -392,4 +396,35 @@ export interface SlackHook {
   notify_wikipage_create: boolean;
   notify_wikipage_change: boolean;
   notify_wikipage_delete: boolean;
+}
+
+export interface HistoryEntry {
+  id: string;
+  user: {
+    pk: number;
+    username: string;
+    name: string;
+    photo?: string | null;
+    is_active?: boolean;
+  };
+  created_at: string;
+  type: number;
+  comment: string;
+  comment_html: string;
+  delete_comment_date?: string | null;
+  edit_comment_date?: string | null;
+  values_diff: Record<string, any>;
+}
+
+export interface MilestoneStats {
+  name: string;
+  estimated_start: string;
+  estimated_finish: string;
+  total_points: number | Record<string, number>;
+  completed_points: number | number[];
+  total_userstories: number;
+  completed_userstories: number;
+  total_tasks: number;
+  completed_tasks: number;
+  days: { day: string; name: number; open_points: number; optimal_points: number }[];
 }

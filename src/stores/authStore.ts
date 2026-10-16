@@ -19,6 +19,7 @@ interface AuthState {
     password: string;
   }) => Promise<AuthResponse>;
   setAuthSession: (res: AuthResponse) => void;
+  setUser: (user: User) => void;
   logout: () => void;
   checkAuth: () => Promise<void>;
   clearError: () => void;
@@ -52,6 +53,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       isLoading: false,
       error: null,
     });
+  },
+
+  setUser: (user: User) => {
+    const merged = { ...get().user, ...user };
+    localStorage.setItem('taiga_user', JSON.stringify(merged));
+    set({ user: merged });
   },
 
   login: async (username, password) => {

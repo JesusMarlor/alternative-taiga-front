@@ -600,14 +600,16 @@ export const EditIssueModal: React.FC<EditIssueModalProps> = ({
                 </div>
               ) : (
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 min-h-[140px] max-h-[260px] overflow-y-auto">
-                  <div
-                    className="taiga-wysiwyg-content select-text"
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        description ||
-                        '<p class="text-slate-400 italic">Sin descripción proporcionada.</p>',
-                    }}
-                  />
+                  {description === (detailedIssue?.description || '') && detailedIssue?.description_html ? (
+                    <div
+                      className="taiga-wysiwyg-content select-text"
+                      dangerouslySetInnerHTML={{ __html: detailedIssue.description_html }}
+                    />
+                  ) : (
+                    <div className="taiga-wysiwyg-content select-text whitespace-pre-wrap">
+                      {description || <p className="text-slate-400 italic">Sin descripción proporcionada.</p>}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

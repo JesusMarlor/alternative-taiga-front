@@ -2,12 +2,15 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import { useThemeStore } from './stores/themeStore';
+import { useProjectStore } from './stores/projectStore';
 import { LoginPage } from './pages/LoginPage';
 import { InvitationPage } from './pages/InvitationPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { ProjectLayout } from './components/layout/ProjectLayout';
 import { KanbanPage } from './pages/KanbanPage';
 import { ScrumPage } from './pages/ScrumPage';
+import { TaskboardPage } from './pages/TaskboardPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { EpicsPage } from './pages/EpicsPage';
 import { IssuesPage } from './pages/IssuesPage';
 import { WikiPageModule } from './pages/WikiPage';
@@ -23,6 +26,24 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     return <Navigate to="/login" replace />;
   }
   return <>{children}</>;
+};
+
+// Land on the first module the project has enabled
+const ProjectHome: React.FC = () => {
+  const { currentProject } = useProjectStore();
+  if (!currentProject) return null;
+  const target = currentProject.is_kanban_activated
+    ? 'kanban'
+    : currentProject.is_backlog_activated
+      ? 'scrum'
+      : currentProject.is_epics_activated
+        ? 'epics'
+        : currentProject.is_issues_activated
+          ? 'issues'
+          : currentProject.is_wiki_activated
+            ? 'wiki'
+            : 'team';
+  return <Navigate to={target} replace />;
 };
 
 export function App() {
@@ -50,6 +71,15 @@ export function App() {
           }
         />
 
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Project workspace routes */}
         <Route
           path="/project/:slug"
@@ -59,9 +89,10 @@ export function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="kanban" replace />} />
+          <Route index element={<ProjectHome />} />
           <Route path="kanban" element={<KanbanPage />} />
           <Route path="scrum" element={<ScrumPage />} />
+          <Route path="taskboard/:milestoneId" element={<TaskboardPage />} />
           <Route path="epics" element={<EpicsPage />} />
           <Route path="issues" element={<IssuesPage />} />
           <Route path="us/:ref" element={<UserStoryDetailPage />} />

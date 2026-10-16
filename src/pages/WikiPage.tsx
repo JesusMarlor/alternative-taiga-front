@@ -103,9 +103,16 @@ export const WikiPageModule: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="prose dark:prose-invert max-w-none text-xs sm:text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">
-                  {selectedPage.content}
-                </div>
+                {selectedPage.html ? (
+                  <div
+                    className="taiga-wysiwyg-content select-text"
+                    dangerouslySetInnerHTML={{ __html: selectedPage.html }}
+                  />
+                ) : (
+                  <div className="prose dark:prose-invert max-w-none text-xs sm:text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">
+                    {selectedPage.content}
+                  </div>
+                )}
               </>
             ) : (
               <div className="text-center py-12 text-slate-400 text-xs">

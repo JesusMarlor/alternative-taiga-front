@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
 import { Navbar } from '../components/layout/Navbar';
 import { ThemeDrawer } from '../components/theme/ThemeDrawer';
+import { CreateProjectModal } from '../components/modals/CreateProjectModal';
 import { 
   FolderKanban, 
   Search, 
@@ -14,7 +15,8 @@ import {
   TrendingUp, 
   Layers, 
   Loader2,
-  Calendar
+  Calendar,
+  Plus
 } from 'lucide-react';
 
 export const ProjectsPage: React.FC = () => {
@@ -23,6 +25,7 @@ export const ProjectsPage: React.FC = () => {
   const { projects, fetchProjects, isLoading, error } = useProjectStore();
   const [search, setSearch] = useState('');
   const [isThemeDrawerOpen, setIsThemeDrawerOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     fetchProjects();
@@ -51,6 +54,16 @@ export const ProjectsPage: React.FC = () => {
             </p>
           </div>
 
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo proyecto
+          </button>
+
           {/* Quick Search */}
           <div className="relative w-full sm:w-72">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -61,6 +74,7 @@ export const ProjectsPage: React.FC = () => {
               placeholder="Buscar proyecto..."
               className="w-full pl-9 pr-4 py-2 rounded-xl text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
+          </div>
           </div>
         </div>
 
@@ -85,7 +99,7 @@ export const ProjectsPage: React.FC = () => {
             {filteredProjects.map((project) => (
               <div
                 key={project.id}
-                onClick={() => navigate(`/project/${project.slug}/kanban`)}
+                onClick={() => navigate(`/project/${project.slug}`)}
                 className="group relative bg-white dark:bg-slate-900/90 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 hover:border-brand-500/50 shadow-sm hover:shadow-xl hover:shadow-brand-500/5 transition-all duration-300 cursor-pointer flex flex-col justify-between"
               >
                 <div>
@@ -150,6 +164,8 @@ export const ProjectsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      <CreateProjectModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
 
       <ThemeDrawer
         isOpen={isThemeDrawerOpen}

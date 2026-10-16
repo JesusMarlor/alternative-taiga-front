@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getSessionId } from './client';
 import { getEventsUrl } from '../utils/env';
 
@@ -201,8 +201,13 @@ export function useTaigaLiveEvents(
   projectId?: number,
   onUpdate?: (eventData: any) => void
 ) {
+  // Keep the latest callback in a ref so inline callbacks don't resubscribe the socket on every render
+  const onUpdateRef = useRef(onUpdate);
+  onUpdateRef.current = onUpdate;
+  const hasHandler = !!onUpdate;
+
   useEffect(() => {
-    if (!projectId || !onUpdate) return;
+    if (!projectId || !hasHandler) return;
 
     const keys = [
       `changes.project.${projectId}.userstories`,
@@ -214,12 +219,12 @@ export function useTaigaLiveEvents(
     const unsubs = keys.map((key) =>
       eventsClient.subscribe(key, (data) => {
         console.log(`[Taiga WSS Live] Event received on ${key}:`, data);
-        onUpdate(data);
+        onUpdateRef.current?.(data);
       })
     );
 
     return () => {
       unsubs.forEach((unsub) => unsub());
     };
-  }, [projectId, onUpdate]);
+  }, [projectId, hasHandler]);
 }
